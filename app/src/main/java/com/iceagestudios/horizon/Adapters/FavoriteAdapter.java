@@ -17,7 +17,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
-import com.iceagestudios.horizon.FavouriteActivity;
 import com.iceagestudios.horizon.MainActivity;
 import com.iceagestudios.horizon.R;
 import com.iceagestudios.horizon.SaveFavoriteList;
@@ -30,12 +29,10 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Holder
     private Context context;
     private ArrayList<File> arrayList;
     private SaveFavoriteList saveFavoriteList;
-    private FavouriteActivity favouriteActivity;
 
-    public FavoriteAdapter(Context context, ArrayList<File> arrayList,FavouriteActivity favouriteActivity) {
+    public FavoriteAdapter(Context context, ArrayList<File> arrayList) {
         this.context = context;
         this.arrayList = arrayList;
-        this.favouriteActivity = favouriteActivity;
     }
 
     @NonNull
@@ -49,9 +46,9 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Holder
     public void onBindViewHolder(@NonNull final Holder holder, int position) {
 
         String name = arrayList.get(position).getName();
-        name = name.substring(0, name.lastIndexOf("."));
+        name = name.substring(0,name.lastIndexOf("."));
         holder.videoTextView.setText(name);
-        RequestOptions options = new RequestOptions().override(500, 700);
+        RequestOptions options = new RequestOptions().override(500,700);
         options.centerCrop();
         RequestOptions requestOptions = RequestOptions
                 .diskCacheStrategyOf(DiskCacheStrategy.ALL);
@@ -77,16 +74,9 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Holder
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(context, VideoPlayer.class);
-                intent.putExtra("VideoPath", arrayList.get(holder.getAdapterPosition()).getAbsolutePath());
+                intent.putExtra("VideoPath",arrayList.get(holder.getAdapterPosition()).getAbsolutePath());
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intent);
-            }
-        });
-
-        holder.imageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
             }
         });
     }
