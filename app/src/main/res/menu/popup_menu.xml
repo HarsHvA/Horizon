@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<item android:title="Playback speed"
+    android:id="@+id/play_back_speed"
+    android:icon="@drawable/ic_directions_run_black_24dp"/>
+
+    <item android:title="Sleep alarm"
+        android:id="@+id/sleep_timer"
+        android:icon="@drawable/ic_add_alarm_black_24dp"/>
+
+    <item android:title="Jump to Time"
+        android:id="@+id/jump_to_time"
+        android:icon="@drawable/ic_play_for_work_black_24dp"/>
+
+    <item android:title="Resize"
+        android:id="@+id/resize"
+        android:icon="@drawable/ic_aspect_ratio_black_24dp"/>
+
+</menu>

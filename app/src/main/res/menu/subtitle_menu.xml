@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+<item
+    android:title="Online subtitles"
+    android:id="@+id/online_sub"/>
+    -->
+    <item
+    android:title="Subtitles"
+    android:id="@+id/offline_sub"/>
+    <item
+        android:title="Remove subtitles"
+        android:id="@+id/remove_sub"/>
+</menu>

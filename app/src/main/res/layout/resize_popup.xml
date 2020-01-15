@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Fill Width"
+        android:textColor="#fff"
+        android:textStyle="bold"
+        android:fontFamily="@font/acme"
+        android:background="@android:color/transparent"
+        android:id="@+id/four_resize"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:textColor="#fff"
+        android:textStyle="bold"
+        android:fontFamily="@font/acme"
+        android:background="@android:color/transparent"
+        android:text="Fill Height"
+        android:id="@+id/six_resize"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:textColor="#fff"
+        android:textStyle="bold"
+        android:fontFamily="@font/acme"
+        android:background="@android:color/transparent"
+        android:text="Best fit"
+        android:id="@+id/fit_resize"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:textColor="#fff"
+        android:textStyle="bold"
+        android:fontFamily="@font/acme"
+        android:background="@android:color/transparent"
+        android:text="Fill"
+        android:id="@+id/fill_resize"/>
+
+</LinearLayout>

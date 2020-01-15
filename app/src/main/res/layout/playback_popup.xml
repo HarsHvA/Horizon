@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Very Slow"
+        android:textColor="#fff"
+        android:textStyle="bold"
+        android:fontFamily="@font/acme"
+        android:background="@android:color/transparent"
+        android:id="@+id/verySlow"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:textColor="#fff"
+        android:textStyle="bold"
+        android:fontFamily="@font/acme"
+        android:background="@android:color/transparent"
+        android:text="Slow"
+        android:id="@+id/slow"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:textColor="#fff"
+        android:textStyle="bold"
+        android:fontFamily="@font/acme"
+        android:background="@android:color/transparent"
+        android:text="Normal"
+        android:id="@+id/normal"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:textColor="#fff"
+        android:textStyle="bold"
+        android:fontFamily="@font/acme"
+        android:background="@android:color/transparent"
+        android:text="Fast"
+        android:id="@+id/fast"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:textColor="#fff"
+        android:textStyle="bold"
+        android:fontFamily="@font/acme"
+        android:background="@android:color/transparent"
+        android:text="Very Fast"
+        android:id="@+id/very_fast"/>
+
+</LinearLayout>

@@ -1,0 +1,24 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:statusBarColor">@android:color/background_dark</item>
+    </style>
+
+    <style name="CustomViewAllTab" parent="@android:style/TextAppearance.Widget.TabWidget">
+        <item name="android:textSize">20sp</item>
+        <item name="android:fontFamily">@font/acme</item>
+    </style>
+
+    <style name="AlertDialogStyle" parent="Theme.AppCompat.Light.Dialog">
+        <item name="android:background">#000</item>
+        <item name="android:colorAccent">#fff</item>
+        <item name="android:textColor">#fff</item>
+        <item name="android:fontFamily">@font/acme</item>
+        <item name="android:textColorPrimary">#fff</item>
+    </style>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#008577</color>
+    <color name="colorPrimaryDark">#FFFFFF</color>
+    <color name="colorAccent">#FF0000</color>
+    <color name="tab_indicator">#000000</color>
+    <color name="tab_background_selected">#000000</color>
+    <color name="tab_background_unselected">#FFFFFF</color>
+    <color name="swipe_re">#6E51FF</color>
+    <color name="card_color">#000</color>
+</resources>

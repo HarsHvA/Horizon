@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/root"
+        android:orientation="vertical"
+        android:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="5dp"
+            android:gravity="center"
+            android:visibility="visible"
+            android:background="@android:color/transparent">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Video"
+                android:textColor="#fff"
+                android:gravity="center"
+                android:textSize="22sp"
+                android:fontFamily="@font/acme"
+                android:maxLines="1"
+                android:paddingStart="35dp"
+                android:paddingEnd="35dp"
+                android:ellipsize="end"
+                android:layout_weight="1"
+                android:id="@+id/txt_title"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:gravity="center"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:orientation="vertical"
+            android:visibility="visible"
+            android:id="@+id/seekbar_time">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="20dp"
+                    android:paddingTop="15dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="2dp"
+                    android:id="@+id/txt_currentTime"
+                    android:layout_alignParentStart="true"
+                    android:text="00:00:00"
+                    android:textColor="@color/colorAccent"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="10dp"
+                    android:paddingTop="15dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="2dp"
+                    android:id="@+id/txt_totalDuration"
+                    android:layout_alignParentEnd="true"
+                    android:text="00:00:00"
+                    android:textColor="#FFF"/>
+
+            </RelativeLayout>
+
+            <com.google.android.exoplayer2.ui.DefaultTimeBar
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:paddingStart="15dp"
+                android:paddingEnd="15dp"
+                android:id="@+id/timeBar"
+                android:layout_gravity="center"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:id="@+id/controls"
+            android:paddingBottom="10dp"
+            android:gravity="center"
+            android:background="@android:color/transparent">
+
+            <ImageButton
+                android:id="@+id/btn_lock"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:src="@drawable/ic_lock_outline_black_24dp"
+                android:paddingStart="10dp"
+                android:layout_weight="1"
+                android:paddingEnd="10dp"/>
+
+            <ImageButton
+                android:id="@+id/btn_caption"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:src="@drawable/ic_subtitles_black_24dp"
+                android:paddingStart="10dp"
+                android:layout_weight="1"
+                android:paddingEnd="10dp"
+                android:onClick="ShowSubtitlePopup"/>
+
+            <ImageButton
+                android:id="@+id/btn_pause"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:src="@drawable/ic_pause_circle_outline_black_24dp"
+                android:paddingStart="10dp"
+                android:layout_weight="1"
+                android:paddingEnd="10dp"/>
+
+            <ImageButton
+                android:id="@+id/btn_screen_orientation"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:src="@drawable/ic_screen_rotation_black_24dp"
+                android:paddingStart="10dp"
+                android:layout_weight="1"
+                android:paddingEnd="10dp"/>
+
+            <ImageButton
+                android:id="@+id/btn_more"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:src="@drawable/more"
+                android:paddingStart="10dp"
+                android:layout_weight="1"
+                android:paddingEnd="10dp"
+                android:onClick="ShowMoreBtnPopUp"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/unlock_panel"
+        android:visibility="gone"
+        android:background="@android:color/transparent"
+        android:gravity="center_vertical"
+        android:padding="10dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="80dp">
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btn_unlock"
+            android:layout_gravity="center"
+            android:background="@null"
+            android:src="@drawable/ic_lock_open_black_24dp"/>
+    </LinearLayout>
+</FrameLayout>
