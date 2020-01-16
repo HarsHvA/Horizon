@@ -30,6 +30,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
@@ -44,6 +45,9 @@ import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.MergingMediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.SingleSampleMediaSource;
+import com.google.android.exoplayer2.source.dash.DashMediaSource;
+import com.google.android.exoplayer2.source.hls.HlsMediaSource;
+import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource;
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.ui.TimeBar;
@@ -84,9 +88,12 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
     private Point size;
     private AudioManager audioManager;
     private WindowManager.LayoutParams layoutParams;
-    private String seekDuration;
+    private String seekDuration,path;
     private boolean showController = true;
     private MediaSource mediaSource;
+    private Uri url;
+    private ProgressBar progressBar;
+    private Intent intent;
 // Subtitles
 
     private Dialog popupWindow,onlineSubDialog;
@@ -133,13 +140,26 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         if(e1.getX()<e2.getX() && (e2.getX()-e1.getX())>100)
         {
             int speed = (int) ((e2.getX() - e1.getX())*10);
-            exoPlayer.seekTo(exoPlayer.getCurrentPosition() + speed);
+            if(exoPlayer.getCurrentPosition() > exoPlayer.getDuration() - 10000 )
+            {
+                exoPlayer.seekTo(exoPlayer.getDuration());
+            }
+            else
+            {
+                exoPlayer.seekTo(exoPlayer.getCurrentPosition() + speed);
+            }
             ShowVolBrightLayout(seekDuration,null);
         }
         else if(e2.getX()<e1.getX() && (e1.getX()-e2.getX())>100)
         {
             int speed = (int) ((e1.getX() - e2.getX())*10);
-            exoPlayer.seekTo(exoPlayer.getCurrentPosition() - speed);
+            if(exoPlayer.getCurrentPosition() < 10000)
+            {
+                exoPlayer.seekTo(0);
+            }else
+            {
+                exoPlayer.seekTo(exoPlayer.getCurrentPosition() - speed);
+            }
             ShowVolBrightLayout("["+seekDuration+"]",null);
         }
         int width = sWidth/2;
@@ -432,9 +452,22 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
         setContentView(R.layout.activity_video_player);
 
-        Intent intent = getIntent();
-        String path = intent.getStringExtra("VideoPath");
-       // Log.i("path_jj", path);
+        intent = getIntent();
+        audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
+        Objects.requireNonNull(audioManager).requestAudioFocus(null,AudioManager.STREAM_MUSIC,AudioManager.AUDIOFOCUS_GAIN);
+      /*  String action = intent.getAction();
+        String type = intent.getType();
+        if(Intent.ACTION_VIEW.equals(action) && type!=null) {
+            if (type.equals("video/*")) {
+                Log.i("int_type", action);
+                handleSendText(intent);// Handle text being sent
+            }
+        }
+        Log.d(TAG, "onCreate: "+ action);
+        url = Uri.parse(intent.getStringExtra("VideoPath"));
+        Log.d(TAG, "onCreate: " + url);
+        */
+        String name = intent.getStringExtra("VideoName");
         layoutParams = getWindow().getAttributes();
         audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
         display = getWindowManager().getDefaultDisplay();
@@ -447,25 +480,16 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         playerView = findViewById(R.id.playerView);
         FindView();
         decorView = getWindow().getDecorView();
-        File file = new File(Objects.requireNonNull(path));
+
         gestureDetector = new GestureDetector(this,this);
         gestureDetector.setOnDoubleTapListener(this);
         exoPlayer = ExoPlayerFactory.newSimpleInstance(this);
         playerView.setPlayer(exoPlayer);
-        Uri uri = Uri.parse(path);
-
-        DefaultDataSourceFactory dataSourceFactory = new DefaultDataSourceFactory(this,
-                Util.getUserAgent(this,"com.iceagestudios.hvplayer"));
-
-
-        mediaSource = new ProgressiveMediaSource.Factory(dataSourceFactory)
-                .createMediaSource(uri);
-        exoPlayer.prepare(mediaSource);
+        exoPlayer.prepare(CreateMediaSource());
         exoPlayer.addListener(this);
         exoPlayer.setPlayWhenReady(true);
         TextView txt_title = findViewById(R.id.txt_title);
-        txt_title.setText(file.getName());
-
+        txt_title.setText(name);
         mainHandler = new Handler();
 
         updatePlayer = new Runnable() {
@@ -541,6 +565,7 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         btn_lock = findViewById(R.id.btn_lock);
         btn_unlock = findViewById(R.id.btn_unlock);
         btn_more = findViewById(R.id.btn_more);
+        progressBar = findViewById(R.id.progress_bar);
 
     }
 
@@ -585,6 +610,7 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
 
         if(playbackState == ExoPlayer.STATE_READY && playWhenReady)
         {
+            progressBar.setVisibility(View.GONE);
             @SuppressLint("DefaultLocale") String totDur = String.format("%02d.%02d.%02d",
                     TimeUnit.MILLISECONDS.toHours(exoPlayer.getDuration()),
                     TimeUnit.MILLISECONDS.toMinutes(exoPlayer.getDuration()) -
@@ -592,6 +618,9 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
                     TimeUnit.MILLISECONDS.toSeconds(exoPlayer.getDuration()) -
                             TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(exoPlayer.getDuration())));
             txt_td.setText(totDur);
+        }else if(playbackState == ExoPlayer.STATE_BUFFERING)
+        {
+            progressBar.setVisibility(View.VISIBLE);
         }
     }
 
@@ -877,16 +906,12 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
     public void FetchSubtitles(String path)
     {
         Uri uri = Uri.parse(path);
-        DefaultDataSourceFactory dataSourceFactory = new DefaultDataSourceFactory(this,
-                Util.getUserAgent(this,"com.iceagestudios.videoplayer"));
-        subtitleSource = new SingleSampleMediaSource.Factory(dataSourceFactory).createMediaSource(uri,
+        subtitleSource = new SingleSampleMediaSource.Factory(CreateDataSourceFactory()).createMediaSource(uri,
                 Format.createTextSampleFormat(null, MimeTypes.APPLICATION_SUBRIP,
                         Format.NO_VALUE, "en", null),
                 C.TIME_UNSET);
-        if(mediaSource!=null) {
-            MergingMediaSource mergingMediaSource = new MergingMediaSource(mediaSource, subtitleSource);
+            MergingMediaSource mergingMediaSource = new MergingMediaSource(CreateMediaSource(), subtitleSource);
             exoPlayer.prepare(mergingMediaSource);
-        }
         exoPlayer.setPlayWhenReady(true);
         if(popupWindow!=null && popupWindow.isShowing()) {
             popupWindow.dismiss();
@@ -973,4 +998,62 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
     }
 
   */
+    private MediaSource CreateMediaSource()
+    {
+        int type = Util.inferContentType(VideoUrl());
+
+        switch (type)
+        {
+            case C.TYPE_DASH:
+                return new DashMediaSource.Factory(CreateDataSourceFactory()).createMediaSource(VideoUrl());
+
+            case C.TYPE_HLS:
+                return new HlsMediaSource.Factory(CreateDataSourceFactory()).createMediaSource(VideoUrl());
+
+            case C.TYPE_SS:
+                return new SsMediaSource.Factory(CreateDataSourceFactory()).createMediaSource(VideoUrl());
+
+            case C.TYPE_OTHER:
+                return new ProgressiveMediaSource.Factory(CreateDataSourceFactory()).createMediaSource(VideoUrl());
+
+                default:
+                    throw  new IllegalStateException("Unsupported Type: " + type);
+        }
+
+    }
+
+
+    private Uri VideoUrl()
+    {
+        Uri url;
+        Intent intent = getIntent();
+        String action = intent.getAction();
+        String type = intent.getType();
+        Log.d(TAG, "VideoUrl: " + type);
+        if(Intent.ACTION_VIEW.equals(action) && type!=null) {
+            if (type.equals("video/*")) {
+                Uri videoUri = intent.getData();
+                if (videoUri != null) {
+                    url = videoUri;
+                    return url;
+                }
+            }
+        }else if(action == null)
+        {
+            url = Uri.parse(intent.getStringExtra("VideoPath"));
+            return url;
+        }else if(Intent.ACTION_VIEW.equals(action))
+        {
+            url = intent.getData();
+            return url;
+        }
+        return null;
+    }
+
+
+    private DefaultDataSourceFactory CreateDataSourceFactory()
+    {
+        return new DefaultDataSourceFactory(this,
+                Util.getUserAgent(this,"com.iceagestudios.hvplayer"));
+    }
 }

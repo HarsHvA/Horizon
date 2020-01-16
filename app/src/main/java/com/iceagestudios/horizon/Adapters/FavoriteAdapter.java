@@ -75,6 +75,7 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Holder
             public void onClick(View v) {
                 Intent intent = new Intent(context, VideoPlayer.class);
                 intent.putExtra("VideoPath",arrayList.get(holder.getAdapterPosition()).getAbsolutePath());
+                intent.putExtra("VideoName",arrayList.get(holder.getAdapterPosition()).getName());
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intent);
             }

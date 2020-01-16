@@ -5,7 +5,19 @@
     android:layout_width="match_parent"
     android:padding="5dp"
     android:gravity="center"
+    android:background="#000"
     android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:gravity="center"
+        android:textSize="25sp"
+        android:id="@+id/online_title"
+        android:fontFamily="@font/acme"
+        android:textColor="#727272"
+        android:padding="3dp"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,12 +29,13 @@
             android:layout_height="wrap_content"
             android:text="Url :"
             android:textSize="22sp"
-            android:textColor="@color/colorAccent"
+            android:textColor="#727272"
             android:fontFamily="@font/acme"/>
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
+        android:textColor="#727272"
         android:id="@+id/online_sub_url"/>
     </LinearLayout>
     <LinearLayout
@@ -35,6 +48,7 @@
             android:layout_height="wrap_content"
             android:text="Cancel"
             android:layout_margin="3dp"
+            android:textColor="#727272"
             android:background="@null"
             android:id="@+id/cancel_online_sub"
             android:layout_weight="1"/>
@@ -44,6 +58,7 @@
             android:layout_height="wrap_content"
             android:text="Add"
             android:background="@null"
+            android:textColor="#727272"
             android:layout_margin="3dp"
             android:id="@+id/add_online_sub"
             android:layout_weight="1"/>

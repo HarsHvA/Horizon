@@ -63,6 +63,7 @@ public VideoFileActivityAdapter(Context context, ArrayList<File> arrayList, Vide
             public void onClick(View view) {
                 Intent intent = new Intent(context, VideoPlayer.class);
                 intent.putExtra("VideoPath",arrayList.get(holder.getAdapterPosition()).getAbsolutePath());
+                intent.putExtra("VideoName",arrayList.get(holder.getAdapterPosition()).getName());
                 context.startActivity(intent);
             }
         });

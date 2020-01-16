@@ -50,6 +50,8 @@
                     android:layout_height="wrap_content"
                     android:background="@null"
                     android:padding="5dp"
+                    android:id="@+id/httpButton"
+                    android:onClick="HttpFunction"
                     android:src="@drawable/ic_http_black_24dp"/>
 
                 <ImageButton

@@ -24,6 +24,11 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="rtsp" />
+                <data android:scheme="http"/>
+                <data android:scheme="https"/>
+                <data android:scheme="content"/>
+                <data android:scheme="asset"/>
+                <data android:scheme="file"/>
             </intent-filter>
             <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />

@@ -12,17 +12,25 @@ import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 import android.Manifest;
+import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
     private TabLayout tabLayout;
@@ -30,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     public static int RequestPermission =1;
     public static ArrayList<String> favoriteArrayList = new ArrayList<>();
     public static boolean permissionGranted;
+
     public static class PagerAdapter extends FragmentPagerAdapter
     {
 
@@ -168,4 +177,43 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
 
     }
+    public void HttpFunction(View view)
+    {
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.online_dialog);
+        Objects.requireNonNull(dialog.getWindow()).
+                setLayout(WindowManager.LayoutParams.MATCH_PARENT,WindowManager.LayoutParams.WRAP_CONTENT);
+        TextView onlineTitle = dialog.findViewById(R.id.online_title);
+        onlineTitle.setText("Enter network address");
+        dialog.show();
+        InputMethodManager imm = (InputMethodManager) MainActivity.this.getSystemService(Context.INPUT_METHOD_SERVICE);
+        EditText onlineEditText = dialog.findViewById(R.id.online_sub_url);
+        onlineEditText.requestFocus();
+        onlineEditText.setShowSoftInputOnFocus(true);
+        imm.showSoftInput(onlineEditText, InputMethodManager.SHOW_FORCED);
+        final String url = onlineEditText.getText().toString();
+        Button cancel = dialog.findViewById(R.id.cancel_online_sub);
+        cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dialog.dismiss();
+            }
+        });
+        Button add = dialog.findViewById(R.id.add_online_sub);
+        add.setText("Play");
+        add.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                    Intent intent = new Intent(MainActivity.this, VideoPlayer.class);
+                    intent.putExtra("VideoPath",url );
+                    intent.putExtra("VideoName","Stream");
+                    startActivity(intent);
+                    //Toast.makeText(MainActivity.this, "Invalid url!", Toast.LENGTH_SHORT).show();
+
+                dialog.dismiss();
+            }
+        });
+
+    }
+
 }

@@ -65,6 +65,7 @@ public VideosRecyclerAdapter(Context context, ArrayList<File> arrayList,VideosFr
             public void onClick(View v) {
                 Intent intent = new Intent(context, VideoPlayer.class);
                 intent.putExtra("VideoPath",arrayList.get(holder.getAdapterPosition()).getAbsolutePath());
+                intent.putExtra("VideoName",arrayList.get(holder.getAdapterPosition()).getName());
                 context.startActivity(intent);
             }
         });
