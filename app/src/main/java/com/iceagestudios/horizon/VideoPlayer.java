@@ -25,10 +25,13 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -36,6 +39,8 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.DefaultLoadControl;
+import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.Format;
@@ -48,9 +53,12 @@ import com.google.android.exoplayer2.source.SingleSampleMediaSource;
 import com.google.android.exoplayer2.source.dash.DashMediaSource;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource;
+import com.google.android.exoplayer2.text.Subtitle;
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.ui.TimeBar;
+import com.google.android.exoplayer2.upstream.DefaultAllocator;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.android.exoplayer2.util.Util;
@@ -80,7 +88,7 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
     private LinearLayout root,unlock_panel,vol_brightness_layout;
     private ImageButton btn_pause,btn_screen_orientation,btn_lock,btn_unlock,btn_more;
     private boolean pause = false,portrait = true,stopAlarmRunnable = false;
-    private Dialog dialog_playback,dialog_resize,jump_dialog;
+    private Dialog dialog_playback,dialog_resize,jump_dialog,list_dialog;
     private PlaybackParameters parameters;
     private GestureDetector gestureDetector;
     private int sWidth,sHeight;
@@ -88,12 +96,14 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
     private Point size;
     private AudioManager audioManager;
     private WindowManager.LayoutParams layoutParams;
-    private String seekDuration,path;
+    private String seekDuration;
     private boolean showController = true;
-    private MediaSource mediaSource;
-    private Uri url;
     private ProgressBar progressBar;
     private Intent intent;
+    private long seekProgress;
+    private int loadControlBufferMs = 90000;
+   // private ArrayAdapter<String> listAdapter;
+   // private ArrayList<String> subArrayList;
 // Subtitles
 
     private Dialog popupWindow,onlineSubDialog;
@@ -105,7 +115,7 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
     public static int holderPosition = -1;
     public ImageButton btn_goback;
     public boolean caption;
-    private String onlinePath;
+    //private String onlinePath;
 
 
     @Override
@@ -423,13 +433,13 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
                 mAdapter.notifyDataSetChanged();
                 break;
 
-/*            case R.id.add_online_sub:
+       /*     case R.id.add_online_sub:
                 if(onlinePath == null)
                 {
-                    Toast.makeText(this, "Url is empty!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Name is empty!", Toast.LENGTH_SHORT).show();
                 }else
                 {
-                    FetchOnlineSubtitles(onlinePath);
+                   ShowSubListDialog();
                 }
                 onlineSubDialog.dismiss();
                 break;
@@ -441,7 +451,9 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
                 btn_pause.setImageResource(R.drawable.ic_pause_circle_outline_black_24dp);
                 break;
 
- */
+
+        */
+
         }
     }
     @Override
@@ -455,18 +467,6 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         intent = getIntent();
         audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
         Objects.requireNonNull(audioManager).requestAudioFocus(null,AudioManager.STREAM_MUSIC,AudioManager.AUDIOFOCUS_GAIN);
-      /*  String action = intent.getAction();
-        String type = intent.getType();
-        if(Intent.ACTION_VIEW.equals(action) && type!=null) {
-            if (type.equals("video/*")) {
-                Log.i("int_type", action);
-                handleSendText(intent);// Handle text being sent
-            }
-        }
-        Log.d(TAG, "onCreate: "+ action);
-        url = Uri.parse(intent.getStringExtra("VideoPath"));
-        Log.d(TAG, "onCreate: " + url);
-        */
         String name = intent.getStringExtra("VideoName");
         layoutParams = getWindow().getAttributes();
         audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
@@ -483,7 +483,18 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
 
         gestureDetector = new GestureDetector(this,this);
         gestureDetector.setOnDoubleTapListener(this);
-        exoPlayer = ExoPlayerFactory.newSimpleInstance(this);
+
+
+        DefaultLoadControl.Builder builder = new DefaultLoadControl.Builder();
+        builder.setBufferDurationsMs(loadControlBufferMs,loadControlBufferMs
+        ,DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS)
+        .setAllocator(new DefaultAllocator(true,16))
+        .setTargetBufferBytes(-1);
+        DefaultLoadControl loadControl = builder.createDefaultLoadControl();
+
+        exoPlayer = ExoPlayerFactory.newSimpleInstance(this,new DefaultTrackSelector(),
+                loadControl);
+
         playerView.setPlayer(exoPlayer);
         exoPlayer.prepare(CreateMediaSource());
         exoPlayer.addListener(this);
@@ -682,17 +693,18 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
             public boolean onMenuItemClick(MenuItem item) {
                 switch (item.getItemId())
                 {
-                  /*  case R.id.online_sub:
+                   /* case R.id.online_sub:
                         exoPlayer.setPlayWhenReady(false);
                         pause = true;
                         btn_pause.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
                         ShowOnlineSubtitleDialog();
-                 //       Toast.makeText(VideoPlayer.this, "Online Subtitles!", Toast.LENGTH_SHORT).show();
                         return true;
 
-                   */
+
+                    */
 
                     case R.id.offline_sub:
+                        seekProgress = exoPlayer.getCurrentPosition();
                         exoPlayer.setPlayWhenReady(false);
                         ShowOfflineSubtitleDialog();
                         AddCaptions(directory);
@@ -701,9 +713,9 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
                     case R.id.remove_sub:
                         if(caption)
                         {
-                            long progress = exoPlayer.getContentDuration();
+                            long progress = exoPlayer.getCurrentPosition();
                             exoPlayer.setPlayWhenReady(false);
-                            exoPlayer.prepare(mediaSource);
+                            exoPlayer.prepare(CreateMediaSource());
                             caption = false;
                             exoPlayer.setPlayWhenReady(true);
                             exoPlayer.seekTo(progress);
@@ -913,6 +925,7 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
             MergingMediaSource mergingMediaSource = new MergingMediaSource(CreateMediaSource(), subtitleSource);
             exoPlayer.prepare(mergingMediaSource);
         exoPlayer.setPlayWhenReady(true);
+        exoPlayer.seekTo(seekProgress);
         if(popupWindow!=null && popupWindow.isShowing()) {
             popupWindow.dismiss();
         }
@@ -991,11 +1004,37 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         EditText editText = onlineSubDialog.findViewById(R.id.online_sub_url);
         Button add_btn = onlineSubDialog.findViewById(R.id.add_online_sub);
         Button cancel_btn = onlineSubDialog.findViewById(R.id.cancel_online_sub);
+        TextView online_title = onlineSubDialog.findViewById(R.id.online_title);
+        TextView online_url_txt_view = onlineSubDialog.findViewById(R.id.online_url_text_view);
+        online_url_txt_view.setText("");
+        online_title.setText("Enter movie name");
+        add_btn.setText("Search");
         onlineSubDialog.show();
         add_btn.setOnClickListener(this);
         cancel_btn.setOnClickListener(this);
         onlinePath = editText.getText().toString();
     }
+
+    private void ShowSubListDialog()
+    {
+        list_dialog = new Dialog(this);
+        list_dialog.setContentView(R.layout.online_sub_search_dialog);
+        Objects.requireNonNull(list_dialog.getWindow()).setLayout(WindowManager.LayoutParams.MATCH_PARENT
+        ,WindowManager.LayoutParams.MATCH_PARENT);
+        ListView listView = new ListView(this);
+        subArrayList = new ArrayList<>();
+        listAdapter = new ArrayAdapter<>(this,android.R.layout.simple_list_item_1,subArrayList);
+        listView.setAdapter(listAdapter);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+            }
+        });
+
+    }
+
 
   */
     private MediaSource CreateMediaSource()
@@ -1035,16 +1074,19 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
                 Uri videoUri = intent.getData();
                 if (videoUri != null) {
                     url = videoUri;
+                    loadControlBufferMs = 90000;
                     return url;
                 }
             }
         }else if(action == null)
         {
             url = Uri.parse(intent.getStringExtra("VideoPath"));
+            loadControlBufferMs = 50000;
             return url;
         }else if(Intent.ACTION_VIEW.equals(action))
         {
             url = intent.getData();
+            loadControlBufferMs = 90000;
             return url;
         }
         return null;

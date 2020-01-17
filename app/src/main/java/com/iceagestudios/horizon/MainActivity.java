@@ -187,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
         onlineTitle.setText("Enter network address");
         dialog.show();
         InputMethodManager imm = (InputMethodManager) MainActivity.this.getSystemService(Context.INPUT_METHOD_SERVICE);
-        EditText onlineEditText = dialog.findViewById(R.id.online_sub_url);
+        final EditText onlineEditText = dialog.findViewById(R.id.online_sub_url);
         onlineEditText.requestFocus();
         onlineEditText.setShowSoftInputOnFocus(true);
         imm.showSoftInput(onlineEditText, InputMethodManager.SHOW_FORCED);
@@ -205,11 +205,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                     Intent intent = new Intent(MainActivity.this, VideoPlayer.class);
-                    intent.putExtra("VideoPath",url );
-                    intent.putExtra("VideoName","Stream");
+                    intent.putExtra("VideoPath", url);
+                    intent.putExtra("VideoName", "Stream");
                     startActivity(intent);
                     //Toast.makeText(MainActivity.this, "Invalid url!", Toast.LENGTH_SHORT).show();
-
                 dialog.dismiss();
             }
         });
