@@ -169,9 +169,7 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
             if (cursor != null && cursor.moveToFirst()) {
                 int videoPath = cursor.getColumnIndex(MediaStore.Video.Media.DATA);
                 do {
-
-                    String path = cursor.getString(videoPath);
-                    File file = new File(path);
+                    File file = new File(cursor.getString(videoPath));
                     arrayList.add(file);
 
                 } while (cursor.moveToNext());
@@ -179,9 +177,10 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
                 mSwipeRefreshLayout.setRefreshing(false);
             }
         } catch (Exception e) {
-            Log.i("CursorHandleException", e.getMessage());
+            Log.i("CursorHandleException", Objects.requireNonNull(e.getMessage()));
             mSwipeRefreshLayout.setRefreshing(false);
         }
+        Objects.requireNonNull(cursor).close();
         Collections.reverse(arrayList);
         return arrayList;
     }

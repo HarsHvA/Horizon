@@ -14,6 +14,7 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Point;
 import android.media.AudioManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -54,14 +55,21 @@ import com.google.android.exoplayer2.source.dash.DashMediaSource;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource;
 import com.google.android.exoplayer2.text.Subtitle;
+import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.MappingTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelection;
+import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.ui.TimeBar;
+import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultAllocator;
+import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.android.exoplayer2.util.Util;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.iceagestudios.horizon.Adapters.CaptionsAdapter;
 
 import java.io.File;
@@ -102,6 +110,8 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
     private Intent intent;
     private long seekProgress;
     private int loadControlBufferMs = 90000;
+    private String name;
+    private FirebaseAnalytics firebaseAnalytics;
    // private ArrayAdapter<String> listAdapter;
    // private ArrayList<String> subArrayList;
 // Subtitles
@@ -464,12 +474,18 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
         setContentView(R.layout.activity_video_player);
 
+        firebaseAnalytics = FirebaseAnalytics.getInstance(this);
         intent = getIntent();
+
+        if (Build.VERSION.SDK_INT >= 28) {
+            getWindow().getAttributes().layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        }
         audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
         Objects.requireNonNull(audioManager).requestAudioFocus(null,AudioManager.STREAM_MUSIC,AudioManager.AUDIOFOCUS_GAIN);
-        String name = intent.getStringExtra("VideoName");
+        name = intent.getStringExtra("VideoName");
         layoutParams = getWindow().getAttributes();
-        audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+  //      audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
         display = getWindowManager().getDefaultDisplay();
         size = new Point();
         display.getSize(size);
@@ -484,21 +500,13 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         gestureDetector = new GestureDetector(this,this);
         gestureDetector.setOnDoubleTapListener(this);
 
-
-        DefaultLoadControl.Builder builder = new DefaultLoadControl.Builder();
-        builder.setBufferDurationsMs(loadControlBufferMs,loadControlBufferMs
-        ,DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS)
-        .setAllocator(new DefaultAllocator(true,16))
-        .setTargetBufferBytes(-1);
-        DefaultLoadControl loadControl = builder.createDefaultLoadControl();
-
-        exoPlayer = ExoPlayerFactory.newSimpleInstance(this,new DefaultTrackSelector(),
-                loadControl);
+        PreparePlayer();
 
         playerView.setPlayer(exoPlayer);
         exoPlayer.prepare(CreateMediaSource());
         exoPlayer.addListener(this);
         exoPlayer.setPlayWhenReady(true);
+        exoPlayer.setRepeatMode(Player.REPEAT_MODE_ONE);
         TextView txt_title = findViewById(R.id.txt_title);
         txt_title.setText(name);
         mainHandler = new Handler();
@@ -1039,18 +1047,20 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
   */
     private MediaSource CreateMediaSource()
     {
-        int type = Util.inferContentType(VideoUrl());
+        int type = Util.inferContentType(Objects.requireNonNull(VideoUrl()));
 
         switch (type)
         {
             case C.TYPE_DASH:
-                return new DashMediaSource.Factory(CreateDataSourceFactory()).createMediaSource(VideoUrl());
+                return new DashMediaSource.Factory(CreateDataSourceFactory())
+                        .createMediaSource(Objects.requireNonNull(VideoUrl()));
 
             case C.TYPE_HLS:
-                return new HlsMediaSource.Factory(CreateDataSourceFactory()).createMediaSource(VideoUrl());
+                return new HlsMediaSource.Factory(CreateDataSourceFactory()).setAllowChunklessPreparation(true)
+                        .createMediaSource(VideoUrl());
 
             case C.TYPE_SS:
-                return new SsMediaSource.Factory(CreateDataSourceFactory()).createMediaSource(VideoUrl());
+                return new SsMediaSource.Factory(CreateDataSourceFactory()).createMediaSource(Objects.requireNonNull(VideoUrl()));
 
             case C.TYPE_OTHER:
                 return new ProgressiveMediaSource.Factory(CreateDataSourceFactory()).createMediaSource(VideoUrl());
@@ -1092,10 +1102,54 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         return null;
     }
 
+    private void PreparePlayer()
+    {
+        Intent intent = getIntent();
+        String action = intent.getAction();
+        String type = intent.getType();
+        Log.d(TAG, "VideoUrl: " + type);
+        if(Intent.ACTION_VIEW.equals(action) && type!=null) {
+
+            if(name!=null && name.equals("Stream"))
+            {
+                exoPlayer = ExoPlayerFactory.newSimpleInstance(this,TrackSelector(),
+                        defaultLoadControl());
+            }
+            else {
+                exoPlayer = ExoPlayerFactory.newSimpleInstance(this);
+            }
+
+        }else if(action == null)
+        {
+           exoPlayer = ExoPlayerFactory.newSimpleInstance(this);
+        //    Log.d(TAG, "PreparePlayer: "+0);
+        }else if(Intent.ACTION_VIEW.equals(action))
+        {
+            exoPlayer = ExoPlayerFactory.newSimpleInstance(this,TrackSelector(),
+                    defaultLoadControl());
+         //   Log.d(TAG, "PreparePlayer: "+1);
+        }
+    }
 
     private DefaultDataSourceFactory CreateDataSourceFactory()
     {
         return new DefaultDataSourceFactory(this,
                 Util.getUserAgent(this,"com.iceagestudios.hvplayer"));
+    }
+
+    private DefaultLoadControl defaultLoadControl()
+    {
+        loadControlBufferMs = 90000;
+        DefaultLoadControl.Builder builder = new DefaultLoadControl.Builder();
+        builder.setBufferDurationsMs(loadControlBufferMs,loadControlBufferMs
+                ,DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS)
+                .setAllocator(new DefaultAllocator(true,16))
+                .setTargetBufferBytes(-1);
+        return builder.createDefaultLoadControl();
+    }
+
+    private TrackSelector TrackSelector()
+    {
+        return new DefaultTrackSelector();
     }
 }

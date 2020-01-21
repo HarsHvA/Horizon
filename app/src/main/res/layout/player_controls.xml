@@ -17,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="5dp"
+            android:padding="15dp"
             android:gravity="center"
             android:visibility="visible"
             android:background="@android:color/transparent">
@@ -26,6 +26,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:text="Video"
+                android:padding="15dp"
                 android:textColor="#fff"
                 android:gravity="center"
                 android:textSize="22sp"

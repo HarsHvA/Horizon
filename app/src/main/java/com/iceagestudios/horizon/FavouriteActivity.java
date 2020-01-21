@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.iceagestudios.horizon.Adapters.FavoriteAdapter;
 
 import java.io.File;
@@ -22,11 +23,13 @@ public class FavouriteActivity extends AppCompatActivity implements SwipeRefresh
     private RecyclerView recyclerView;
     private TextView textView;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private FirebaseAnalytics firebaseAnalytics;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_favourite);
 
+        firebaseAnalytics = FirebaseAnalytics.getInstance(this);
         saveFavoriteList = new SaveFavoriteList(this);
         saveFavoriteList.RetriveArrayList();
         arrayList = new ArrayList<>();

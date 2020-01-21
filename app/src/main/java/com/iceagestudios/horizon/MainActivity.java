@@ -28,6 +28,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.tabs.TabLayout;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -38,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     public static int RequestPermission =1;
     public static ArrayList<String> favoriteArrayList = new ArrayList<>();
     public static boolean permissionGranted;
+    private FirebaseAnalytics firebaseAnalytics;
 
     public static class PagerAdapter extends FragmentPagerAdapter
     {
@@ -86,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        firebaseAnalytics = FirebaseAnalytics.getInstance(this);
         Permissions();
         final ViewPager viewPager = findViewById(R.id.view_pager);
         viewPager.setAdapter(new PagerAdapter(getSupportFragmentManager(),1));

@@ -41,6 +41,7 @@ public class FolderRecyclerAdapter extends RecyclerView.Adapter<FolderRecyclerAd
         holder.mText.setText(foldersArrayList.get(position).getName());
         int noOfVideos =0;
         File[] listFile = foldersArrayList.get(position).listFiles();
+        if(listFile!=null)
         for(int i =0;i<listFile.length;i++)
         {
             if(listFile[i].getName().endsWith(".mp4")

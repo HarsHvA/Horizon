@@ -27,6 +27,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.iceagestudios.horizon.Adapters.VideoFileActivityAdapter;
 
 import java.io.File;
@@ -52,6 +53,7 @@ public class VideoFilesActivity extends AppCompatActivity implements SwipeRefres
     TextView txt;
     String path;
     int adapterPosition;
+    private FirebaseAnalytics firebaseAnalytics;
 
     private Dialog main_dialog;
     LinearLayout renameLayout;
@@ -64,6 +66,7 @@ public class VideoFilesActivity extends AppCompatActivity implements SwipeRefres
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_video_files);
 
+        firebaseAnalytics = FirebaseAnalytics.getInstance(this);
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
         Intent intent = getIntent();
