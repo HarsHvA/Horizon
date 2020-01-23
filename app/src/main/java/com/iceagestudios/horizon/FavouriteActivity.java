@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.iceagestudios.horizon.Adapters.FavoriteAdapter;
 
@@ -24,12 +26,14 @@ public class FavouriteActivity extends AppCompatActivity implements SwipeRefresh
     private TextView textView;
     private SwipeRefreshLayout swipeRefreshLayout;
     private FirebaseAnalytics firebaseAnalytics;
+    private AdView adView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_favourite);
 
         firebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        LoadAds();
         saveFavoriteList = new SaveFavoriteList(this);
         saveFavoriteList.RetriveArrayList();
         arrayList = new ArrayList<>();
@@ -114,5 +118,18 @@ public class FavouriteActivity extends AppCompatActivity implements SwipeRefresh
         }
         adapter.notifyDataSetChanged();
         swipeRefreshLayout.setRefreshing(false);
+    }
+
+    private void LoadAds()
+    {
+        adView = findViewById(R.id.favouriteActivityAdView);
+        if(MainActivity.showAds) {
+            AdRequest adRequest = new AdRequest.Builder().build();
+            adView.loadAd(adRequest);
+        }else
+        {
+            adView.setVisibility(View.GONE);
+        }
+
     }
 }

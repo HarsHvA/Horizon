@@ -27,6 +27,13 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
@@ -40,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
     public static ArrayList<String> favoriteArrayList = new ArrayList<>();
     public static boolean permissionGranted;
     private FirebaseAnalytics firebaseAnalytics;
+    private AdView adView;
+    public static boolean showAds;
+    private InterstitialAd mInterstitialAd;
 
     public static class PagerAdapter extends FragmentPagerAdapter
     {
@@ -88,7 +98,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        showAds = false;
         firebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        if(showAds) {
+            MobileAds.initialize(this, new OnInitializationCompleteListener() {
+                @Override
+                public void onInitializationComplete(InitializationStatus initializationStatus) {
+
+                }
+            });
+        }
+        LoadAds();
         Permissions();
         final ViewPager viewPager = findViewById(R.id.view_pager);
         viewPager.setAdapter(new PagerAdapter(getSupportFragmentManager(),1));
@@ -98,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
         tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
+               // ShowInterstitialAds();
                 viewPager.setCurrentItem(tab.getPosition());
                 if(viewPager.getCurrentItem() == 0)
                 {
@@ -170,18 +191,21 @@ public class MainActivity extends AppCompatActivity {
 
     public void FavoriteFunction(View view)
     {
+        ShowInterstitialAds();
         Intent intent = new Intent(this,FavouriteActivity.class);
         startActivity(intent);
     }
 
     public void InfoFunction(View view)
     {
+        ShowInterstitialAds();
         Intent intent = new Intent(this,InfoActivity.class);
         startActivity(intent);
 
     }
     public void HttpFunction(View view)
     {
+        ShowInterstitialAds();
         final Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.online_dialog);
         Objects.requireNonNull(dialog.getWindow()).
@@ -216,6 +240,41 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void LoadAds()
+    {
+        adView = findViewById(R.id.mainActivityAdView);
+        if(showAds) {
+            AdRequest adRequest = new AdRequest.Builder().build();
+            adView.loadAd(adRequest);
+
+            mInterstitialAd = new InterstitialAd(this);
+            mInterstitialAd.setAdUnitId("ca-app-pub-3940256099942544/1033173712");
+            mInterstitialAd.loadAd(new AdRequest.Builder().build());
+            mInterstitialAd.setAdListener(new AdListener() {
+                @Override
+                public void onAdClosed() {
+                    super.onAdClosed();
+                    mInterstitialAd.loadAd(new AdRequest.Builder().build());
+                }
+            });
+        }else
+        {
+            adView.setVisibility(View.GONE);
+        }
+    }
+
+    private void ShowInterstitialAds()
+    {
+        if(showAds) {
+            if (mInterstitialAd.isLoaded()) {
+                mInterstitialAd.show();
+            }else
+            {
+                mInterstitialAd.loadAd(new AdRequest.Builder().build());
+            }
+        }
     }
 
 }
