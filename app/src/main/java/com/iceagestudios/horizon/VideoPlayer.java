@@ -10,6 +10,7 @@ import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Point;
 import android.media.AudioManager;
@@ -17,6 +18,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Display;
 import android.view.GestureDetector;
@@ -112,6 +114,7 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
     private int loadControlBufferMs = 90000;
     private String name;
     private FirebaseAnalytics firebaseAnalytics;
+    private SharedPreferences savedUrl;
    // private ArrayAdapter<String> listAdapter;
    // private ArrayList<String> subArrayList;
 // Subtitles
@@ -478,6 +481,7 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         firebaseAnalytics = FirebaseAnalytics.getInstance(this);
         intent = getIntent();
 
+        savedUrl = PreferenceManager.getDefaultSharedPreferences(this);
         if (Build.VERSION.SDK_INT >= 28) {
             getWindow().getAttributes().layoutInDisplayCutoutMode =
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
@@ -508,6 +512,12 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         exoPlayer.addListener(this);
         exoPlayer.setPlayWhenReady(true);
         exoPlayer.setRepeatMode(Player.REPEAT_MODE_ONE);
+        long savedUri = savedUrl.getLong(String.valueOf(VideoUrl()),-1);
+        if(savedUri!= -1)
+        {
+            exoPlayer.seekTo(savedUri);
+        }
+
         TextView txt_title = findViewById(R.id.txt_title);
         txt_title.setText(name);
         mainHandler = new Handler();
@@ -1079,20 +1089,21 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         Intent intent = getIntent();
         String action = intent.getAction();
         String type = intent.getType();
-        Log.d(TAG, "VideoUrl: " + type);
+     //   Log.d(TAG, "VideoUrl: " + type);
         if(Intent.ACTION_VIEW.equals(action) && type!=null) {
             if (type.equals("video/*")) {
                 Uri videoUri = intent.getData();
                 if (videoUri != null) {
                     url = videoUri;
-                    loadControlBufferMs = 90000;
+                    loadControlBufferMs = 50000;
                     return url;
                 }
             }
         }else if(action == null)
         {
             url = Uri.parse(intent.getStringExtra("VideoPath"));
-            loadControlBufferMs = 50000;
+            Log.d(TAG, "VideoUrl: "+ url);
+            loadControlBufferMs = 90000;
             return url;
         }else if(Intent.ACTION_VIEW.equals(action))
         {
@@ -1108,21 +1119,21 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         Intent intent = getIntent();
         String action = intent.getAction();
         String type = intent.getType();
-        Log.d(TAG, "VideoUrl: " + type);
+     //   Log.d(TAG, "VideoUrl: " + type);
         if(Intent.ACTION_VIEW.equals(action) && type!=null) {
 
+                exoPlayer = ExoPlayerFactory.newSimpleInstance(this);
+
+        }else if(action == null)
+        {
             if(name!=null && name.equals("Stream"))
             {
                 exoPlayer = ExoPlayerFactory.newSimpleInstance(this,TrackSelector(),
                         defaultLoadControl());
-            }
-            else {
+            }else
+            {
                 exoPlayer = ExoPlayerFactory.newSimpleInstance(this);
             }
-
-        }else if(action == null)
-        {
-           exoPlayer = ExoPlayerFactory.newSimpleInstance(this);
         //    Log.d(TAG, "PreparePlayer: "+0);
         }else if(Intent.ACTION_VIEW.equals(action))
         {
@@ -1152,5 +1163,11 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
     private TrackSelector TrackSelector()
     {
         return new DefaultTrackSelector();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        savedUrl.edit().putLong(String.valueOf(VideoUrl()),exoPlayer.getCurrentPosition()).apply();
     }
 }

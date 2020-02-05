@@ -60,8 +60,6 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
     private ImageButton search_btn;
     private boolean search_bar;
 
-
-
     public VideosFrag() {
         // Required empty public constructor
     }
@@ -136,18 +134,18 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
             @Override
             public void onClick(View v) {
 
-                InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                InputMethodManager imm = (InputMethodManager) Objects.requireNonNull(getContext()).getSystemService(Context.INPUT_METHOD_SERVICE);
                 if(!search_bar) {
                     mEdit.setVisibility(View.VISIBLE);
                     mEdit.requestFocus();
                     mEdit.setShowSoftInputOnFocus(true);
-                    imm.showSoftInput(mEdit, InputMethodManager.SHOW_FORCED);
+                    Objects.requireNonNull(imm).showSoftInput(mEdit, InputMethodManager.SHOW_FORCED);
                     search_bar = true;
                     search_btn.setBackgroundResource(R.drawable.ic_close_black_30dp);
                 }else{
                     mEdit.setVisibility(View.GONE);
                     search_bar = false;
-                    imm.hideSoftInputFromWindow(mEdit.getWindowToken(),0);
+                    Objects.requireNonNull(imm).hideSoftInputFromWindow(mEdit.getWindowToken(),0);
                     search_btn.setBackgroundResource(R.drawable.ic_search_black_48dp);
                     adapter.FilteredNames(arrayList);
                     mEdit.setText("");
@@ -160,14 +158,14 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
     private ArrayList<File> GetVideoFile()
     {
         mSwipeRefreshLayout.setRefreshing(true);
-        ContentResolver contentResolver = getContext().getContentResolver();
+        ContentResolver contentResolver = Objects.requireNonNull(getContext()).getContentResolver();
         Uri videoUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
         String sortOrder = MediaStore.Video.Media.DATE_ADDED + " ASC";
         Cursor cursor = contentResolver.query(videoUri, null, null, null, sortOrder);
         try {
 
             if (cursor != null && cursor.moveToFirst()) {
-                int videoPath = cursor.getColumnIndex(MediaStore.Video.Media.DATA);
+                int videoPath = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA);
                 do {
                     File file = new File(cursor.getString(videoPath));
                     arrayList.add(file);

@@ -18,6 +18,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
@@ -41,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MainActivity" ;
     private TabLayout tabLayout;
     private ImageButton btn;
     public static int RequestPermission =1;
@@ -98,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        showAds = false;
+        showAds = true;
         firebaseAnalytics = FirebaseAnalytics.getInstance(this);
         if(showAds) {
             MobileAds.initialize(this, new OnInitializationCompleteListener() {
@@ -218,7 +220,6 @@ public class MainActivity extends AppCompatActivity {
         onlineEditText.requestFocus();
         onlineEditText.setShowSoftInputOnFocus(true);
         imm.showSoftInput(onlineEditText, InputMethodManager.SHOW_FORCED);
-        final String url = onlineEditText.getText().toString();
         Button cancel = dialog.findViewById(R.id.cancel_online_sub);
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -231,6 +232,7 @@ public class MainActivity extends AppCompatActivity {
         add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                String url = onlineEditText.getText().toString();
                     Intent intent = new Intent(MainActivity.this, VideoPlayer.class);
                     intent.putExtra("VideoPath", url);
                     intent.putExtra("VideoName", "Stream");
@@ -250,7 +252,7 @@ public class MainActivity extends AppCompatActivity {
             adView.loadAd(adRequest);
 
             mInterstitialAd = new InterstitialAd(this);
-            mInterstitialAd.setAdUnitId("ca-app-pub-3940256099942544/1033173712");
+            mInterstitialAd.setAdUnitId("ca-app-pub-2115971313461607/4508171513");
             mInterstitialAd.loadAd(new AdRequest.Builder().build());
             mInterstitialAd.setAdListener(new AdListener() {
                 @Override

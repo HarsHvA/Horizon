@@ -64,7 +64,7 @@
         android:layout_alignParentBottom="true"
         android:layout_gravity="center"
         ads:adSize="SMART_BANNER"
-        ads:adUnitId="ca-app-pub-3940256099942544/6300978111"/>
+        ads:adUnitId="ca-app-pub-2115971313461607/6751191472"/>
     </RelativeLayout>
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
