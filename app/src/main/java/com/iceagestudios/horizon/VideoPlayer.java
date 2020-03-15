@@ -41,6 +41,10 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.github.angads25.filepicker.controller.DialogSelectionListener;
+import com.github.angads25.filepicker.model.DialogConfigs;
+import com.github.angads25.filepicker.model.DialogProperties;
+import com.github.angads25.filepicker.view.FilePickerDialog;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
@@ -72,7 +76,6 @@ import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.android.exoplayer2.util.Util;
 import com.google.firebase.analytics.FirebaseAnalytics;
-import com.iceagestudios.horizon.Adapters.CaptionsAdapter;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -118,17 +121,8 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
    // private ArrayAdapter<String> listAdapter;
    // private ArrayList<String> subArrayList;
 // Subtitles
-
-    private Dialog popupWindow,onlineSubDialog;
-    private ArrayList<File> captionsArrayList = new ArrayList<>();
-    RecyclerView captionsRecyclerView;
-    CaptionsAdapter mAdapter;
     MediaSource subtitleSource;
-    Button caption_cancel;
-    public static int holderPosition = -1;
-    public ImageButton btn_goback;
     public boolean caption;
-    //private String onlinePath;
 
 
     @Override
@@ -342,6 +336,7 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
     private ControlsMode controlsState;
     private boolean playerState = true;
 
+    @SuppressLint("SourceLockedOrientationActivity")
     @Override
     public void onClick(View v) {
         switch (v.getId())
@@ -431,19 +426,6 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
             case R.id.fill_resize:
                 playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FILL);
                 dialog_resize.dismiss();
-                break;
-
-            case R.id.caption_cancel:
-                popupWindow.dismiss();
-                caption = false;
-                exoPlayer.setPlayWhenReady(true);
-                break;
-
-            case R.id.caption_close_btn:
-                File directory = new File("/mnt/");
-                captionsArrayList.clear();
-                AddCaptions(directory);
-                mAdapter.notifyDataSetChanged();
                 break;
 
        /*     case R.id.add_online_sub:
@@ -725,8 +707,9 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
                     case R.id.offline_sub:
                         seekProgress = exoPlayer.getCurrentPosition();
                         exoPlayer.setPlayWhenReady(false);
+                        btn_pause.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
+                        pause = true;
                         ShowOfflineSubtitleDialog();
-                        AddCaptions(directory);
                         return true;
 
                     case R.id.remove_sub:
@@ -918,7 +901,7 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
 
     private void ShowOfflineSubtitleDialog()
     {
-        popupWindow = new Dialog(this);
+       /* popupWindow = new Dialog(this);
         popupWindow.setContentView(R.layout.captions_layout);
         caption_cancel = popupWindow.findViewById(R.id.caption_cancel);
         btn_goback = popupWindow.findViewById(R.id.caption_close_btn);
@@ -932,6 +915,30 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         Objects.requireNonNull(popupWindow.getWindow()).setBackgroundDrawableResource(android.R.color.transparent);
         popupWindow.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
         popupWindow.show();
+
+        */
+        FilePickerDialog dialog = new FilePickerDialog(this,GetDialogProperties());
+        dialog.setTitle("Select a File");
+
+        dialog.show();
+        dialog.setDialogSelectionListener(new DialogSelectionListener() {
+            @Override
+            public void onSelectedFilePaths(String[] files) {
+                FetchSubtitles(files[0]);
+            }
+        });
+    }
+    private DialogProperties GetDialogProperties()
+    {
+        DialogProperties properties = new DialogProperties();
+        properties.selection_mode = DialogConfigs.SINGLE_MODE;
+        properties.selection_type = DialogConfigs.FILE_SELECT;
+        properties.root = new File(DialogConfigs.DEFAULT_DIR);
+        properties.error_dir = new File(DialogConfigs.DEFAULT_DIR);
+        properties.offset = new File(DialogConfigs.DEFAULT_DIR);
+        properties.extensions = new String[]{".srt"};
+
+        return  properties;
     }
 
     public void FetchSubtitles(String path)
@@ -944,118 +951,12 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
             MergingMediaSource mergingMediaSource = new MergingMediaSource(CreateMediaSource(), subtitleSource);
             exoPlayer.prepare(mergingMediaSource);
         exoPlayer.setPlayWhenReady(true);
+        btn_pause.setImageResource(R.drawable.ic_pause_circle_outline_black_24dp);
+        pause = false;
         exoPlayer.seekTo(seekProgress);
-        if(popupWindow!=null && popupWindow.isShowing()) {
-            popupWindow.dismiss();
-        }
         Toast.makeText(this, path, Toast.LENGTH_SHORT).show();
         caption = true;
     }
-
-   /* private void FetchOnlineSubtitles(String uri)
-    {
-        Uri sub_uri = Uri.parse(uri);
-        try {
-            DefaultHttpDataSourceFactory dataSourceFactory = new DefaultHttpDataSourceFactory
-                    (Util.getUserAgent(this, "com.iceagestudios.videoplayer"));
-
-            Format subtitleFormat = Format.createTextSampleFormat(
-                    null, // An identifier for the track. May be null.
-                    MimeTypes.APPLICATION_SUBRIP, // The mime type. Must be set correctly.
-                    Format.NO_VALUE,
-                    "en",
-                    null);
-
-            MediaSource subtitleSource = new SingleSampleMediaSource.Factory(dataSourceFactory)
-                    .createMediaSource(sub_uri, subtitleFormat, C.TIME_UNSET);
-
-            MergingMediaSource mergedSource =
-                    new MergingMediaSource(mediaSource, subtitleSource);
-            exoPlayer.prepare(mergedSource);
-            exoPlayer.setPlayWhenReady(true);
-            caption = true;
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-        if(onlineSubDialog!=null && onlineSubDialog.isShowing())
-        {
-            onlineSubDialog.dismiss();
-        }
-        exoPlayer.setPlayWhenReady(true);
-        pause = false;
-        btn_pause.setImageResource(R.drawable.ic_pause_circle_outline_black_24dp);
-    }
-
-    */
-
-    public ArrayList<File> GetCaptions(File directory)
-    {
-        File[] listFiles = directory.listFiles();
-        if(listFiles != null && listFiles.length>0)
-            for (File listFile : listFiles) {
-                if(listFile.isDirectory())
-                {
-                    captionsArrayList.remove(listFile);
-                }
-                captionsArrayList.add(listFile);
-                Set<File> set = new HashSet<>(captionsArrayList);
-                captionsArrayList.clear();
-                captionsArrayList.addAll(set);
-            }
-
-        return captionsArrayList;
-    }
-    public void AddCaptions(File directory)
-    {
-        if(MainActivity.permissionGranted) {
-            GetCaptions(directory);
-            mAdapter.notifyDataSetChanged();
-        }
-    }
-
- /*   private void ShowOnlineSubtitleDialog()
-    {
-        onlineSubDialog = new Dialog(this);
-        onlineSubDialog.setContentView(R.layout.online_dialog);
-        Objects.requireNonNull(onlineSubDialog.getWindow()).setLayout(WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.WRAP_CONTENT);
-        EditText editText = onlineSubDialog.findViewById(R.id.online_sub_url);
-        Button add_btn = onlineSubDialog.findViewById(R.id.add_online_sub);
-        Button cancel_btn = onlineSubDialog.findViewById(R.id.cancel_online_sub);
-        TextView online_title = onlineSubDialog.findViewById(R.id.online_title);
-        TextView online_url_txt_view = onlineSubDialog.findViewById(R.id.online_url_text_view);
-        online_url_txt_view.setText("");
-        online_title.setText("Enter movie name");
-        add_btn.setText("Search");
-        onlineSubDialog.show();
-        add_btn.setOnClickListener(this);
-        cancel_btn.setOnClickListener(this);
-        onlinePath = editText.getText().toString();
-    }
-
-    private void ShowSubListDialog()
-    {
-        list_dialog = new Dialog(this);
-        list_dialog.setContentView(R.layout.online_sub_search_dialog);
-        Objects.requireNonNull(list_dialog.getWindow()).setLayout(WindowManager.LayoutParams.MATCH_PARENT
-        ,WindowManager.LayoutParams.MATCH_PARENT);
-        ListView listView = new ListView(this);
-        subArrayList = new ArrayList<>();
-        listAdapter = new ArrayAdapter<>(this,android.R.layout.simple_list_item_1,subArrayList);
-        listView.setAdapter(listAdapter);
-
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-
-            }
-        });
-
-    }
-
-
-  */
     private MediaSource CreateMediaSource()
     {
         int type = Util.inferContentType(Objects.requireNonNull(VideoUrl()));

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000"
+    android:background="@color/main_color"
     android:orientation="vertical"
     tools:context=".VideoFilesActivity">
 
@@ -61,7 +61,6 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_above="@+id/videoFilesActivityAdView"
             android:orientation="vertical">
             <EditText
                 android:layout_width="match_parent"
@@ -80,15 +79,6 @@
                 android:id="@+id/mRecyclerView"/>
             </RelativeLayout>
         </LinearLayout>
-            <com.google.android.gms.ads.AdView
-                xmlns:ads="http://schemas.android.com/apk/res-auto"
-                android:layout_width="match_parent"
-                android:id="@+id/videoFilesActivityAdView"
-                android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
-                android:layout_gravity="center"
-                ads:adSize="SMART_BANNER"
-                ads:adUnitId="ca-app-pub-2115971313461607/5953308647"/>
         </RelativeLayout>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 </LinearLayout>

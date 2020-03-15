@@ -27,8 +27,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.iceagestudios.horizon.Adapters.VideoFileActivityAdapter;
 
@@ -56,7 +54,6 @@ public class VideoFilesActivity extends AppCompatActivity implements SwipeRefres
     String path;
     int adapterPosition;
     private FirebaseAnalytics firebaseAnalytics;
-    private AdView adView;
 
     private Dialog main_dialog;
     LinearLayout renameLayout;
@@ -70,7 +67,6 @@ public class VideoFilesActivity extends AppCompatActivity implements SwipeRefres
         setContentView(R.layout.activity_video_files);
 
         firebaseAnalytics = FirebaseAnalytics.getInstance(this);
-        LoadAds();
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
         Intent intent = getIntent();
@@ -232,7 +228,7 @@ public class VideoFilesActivity extends AppCompatActivity implements SwipeRefres
                 main_dialog.dismiss();
                 break;
             case R.id.favorite:
-                MainActivity.favoriteArrayList.add(path);
+               // MainActivity.favoriteArrayList.add(path);
                 saveFavoriteList.SaveArrayList();
                 Toast.makeText(this, "Added to favorite!", Toast.LENGTH_SHORT).show();
                 main_dialog.dismiss();
@@ -377,18 +373,5 @@ public class VideoFilesActivity extends AppCompatActivity implements SwipeRefres
 
             startActivity(Intent.createChooser(intentShareFile, "Share File"));
         }
-    }
-
-    private void LoadAds()
-    {
-        adView = findViewById(R.id.videoFilesActivityAdView);
-        if(MainActivity.showAds) {
-            AdRequest adRequest = new AdRequest.Builder().build();
-            adView.loadAd(adRequest);
-        }else
-        {
-            adView.setVisibility(View.GONE);
-        }
-
     }
 }

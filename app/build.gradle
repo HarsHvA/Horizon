@@ -7,8 +7,8 @@ android {
         applicationId "com.iceagestudios.horizon"
         minSdkVersion 22
         targetSdkVersion 29
-        versionCode 3
-        versionName "1.0"
+        versionCode 6
+        versionName "5.01"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
@@ -29,6 +29,7 @@ dependencies {
     implementation 'com.google.android.exoplayer:exoplayer:2.10.4'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'com.github.angads25:filepicker:1.1.1'
     implementation 'com.google.firebase:firebase-analytics:17.2.2'
     implementation 'com.google.firebase:firebase-crashlytics:17.0.0-beta01'
     implementation 'com.google.code.gson:gson:2.8.6'
@@ -38,11 +39,9 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     implementation 'com.google.android.material:material:1.0.0'
-
-    implementation 'com.google.android.gms:play-services-ads:18.3.0'
+    implementation 'com.airbnb.android:lottie:3.4.0'
     implementation 'com.github.bumptech.glide:glide:4.10.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.10.0'
 }
 apply plugin: 'com.google.gms.google-services'
 apply plugin: 'com.google.firebase.crashlytics'
-

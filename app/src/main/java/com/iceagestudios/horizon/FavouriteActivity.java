@@ -10,13 +10,12 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.iceagestudios.horizon.Adapters.FavoriteAdapter;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 public class FavouriteActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener{
     private SaveFavoriteList saveFavoriteList;
@@ -26,14 +25,12 @@ public class FavouriteActivity extends AppCompatActivity implements SwipeRefresh
     private TextView textView;
     private SwipeRefreshLayout swipeRefreshLayout;
     private FirebaseAnalytics firebaseAnalytics;
-    private AdView adView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_favourite);
 
         firebaseAnalytics = FirebaseAnalytics.getInstance(this);
-        LoadAds();
         saveFavoriteList = new SaveFavoriteList(this);
         saveFavoriteList.RetriveArrayList();
         arrayList = new ArrayList<>();
@@ -45,7 +42,6 @@ public class FavouriteActivity extends AppCompatActivity implements SwipeRefresh
             for (int i = 0; i < MainActivity.favoriteArrayList.size(); i++) {
                 arrayList.add(new File(MainActivity.favoriteArrayList.get(i)));
             }
-
         }
         if(arrayList!=null && arrayList.size()>0)
         {
@@ -65,7 +61,6 @@ public class FavouriteActivity extends AppCompatActivity implements SwipeRefresh
             textView.setVisibility(View.VISIBLE);
 
         }
-
         swipeRefreshLayout.setOnRefreshListener(this);
         swipeRefreshLayout.setColorSchemeResources(R.color.swipe_re,
                 android.R.color.holo_green_dark,
@@ -118,18 +113,5 @@ public class FavouriteActivity extends AppCompatActivity implements SwipeRefresh
         }
         adapter.notifyDataSetChanged();
         swipeRefreshLayout.setRefreshing(false);
-    }
-
-    private void LoadAds()
-    {
-        adView = findViewById(R.id.favouriteActivityAdView);
-        if(MainActivity.showAds) {
-            AdRequest adRequest = new AdRequest.Builder().build();
-            adView.loadAd(adRequest);
-        }else
-        {
-            adView.setVisibility(View.GONE);
-        }
-
     }
 }

@@ -20,10 +20,12 @@ import com.bumptech.glide.request.RequestOptions;
 import com.iceagestudios.horizon.MainActivity;
 import com.iceagestudios.horizon.R;
 import com.iceagestudios.horizon.SaveFavoriteList;
+import com.iceagestudios.horizon.Video;
 import com.iceagestudios.horizon.VideoPlayer;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Holder> {
     private Context context;
@@ -80,6 +82,47 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Holder
                 context.startActivity(intent);
             }
         });
+
+      /*  final Video video = arrayList.get(position);
+        String name = video.name;
+        if(name!=null) {
+            name = name.substring(0, name.lastIndexOf("."));
+        }
+        holder.videoTextView.setText(name);
+        RequestOptions options = new RequestOptions().override(500,700);
+        options.centerCrop();
+        RequestOptions requestOptions = RequestOptions
+                .diskCacheStrategyOf(DiskCacheStrategy.ALL);
+        Glide.with(context)
+                .load(video.uri)
+                .placeholder(R.drawable.ic_launcher_background)
+                .apply(options)
+                .dontAnimate()
+                .apply(requestOptions)
+                .into(holder.img_Thumbnail);
+        saveFavoriteList = new SaveFavoriteList(context);
+        holder.imageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MainActivity.favoriteArrayList.remove(video);
+                saveFavoriteList.SaveArrayList();
+                Toast.makeText(context, "Removed from favorite!", Toast.LENGTH_SHORT).show();
+                notifyDataSetChanged();
+            }
+        });
+
+        holder.videoCardView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(context, VideoPlayer.class);
+                intent.putExtra("VideoPath",video.uri);
+                intent.putExtra("VideoName",video.name);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            }
+        });
+
+       */
     }
 
     @Override
