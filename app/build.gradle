@@ -7,12 +7,13 @@ android {
         applicationId "com.iceagestudios.horizon"
         minSdkVersion 22
         targetSdkVersion 29
-        versionCode 6
-        versionName "5.01"
+        versionCode 7
+        versionName "5.02"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
         targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility = 1.8
     }
     buildTypes {
         release {

@@ -21,7 +21,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:visibility="gone"
-                android:textColor="#727272"
+                android:textColor="#fff"
                 android:id="@+id/editText"
                 android:imeOptions="actionDone"
                 android:singleLine="true" />

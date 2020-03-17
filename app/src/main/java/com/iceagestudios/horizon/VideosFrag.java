@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -38,13 +39,20 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.exoplayer2.C;
 import com.iceagestudios.horizon.Adapters.VideosRecyclerAdapter;
+import com.iceagestudios.horizon.FetchVideos.Constant;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +66,7 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private SaveFavoriteList saveFavoriteList;
     private EditText mEdit;
-    String path;
+    private String path;
     private int adapterPosition;
     private Dialog main_dialog;
     private ImageButton search_btn;
@@ -78,10 +86,10 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
         RecyclerView recyclerView = view.findViewById(R.id.videoRecyclerView);
         mEdit = view.findViewById(R.id.editText);
         mSwipeRefreshLayout = view.findViewById(R.id.swipe_refresh);
-        adapter = new VideosRecyclerAdapter(getContext(),this,mEdit,GetVideoList());
+        adapter = new VideosRecyclerAdapter(getContext(),this,mEdit,FetchVideoList());
         saveFavoriteList = new SaveFavoriteList(getContext());
         search_btn = Objects.requireNonNull(getActivity()).findViewById(R.id.search_btn);
-        StaggeredGridLayoutManager manager = new StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL);
+        StaggeredGridLayoutManager manager = new StaggeredGridLayoutManager(3, LinearLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(manager);
         recyclerView.setHasFixedSize(true);
         recyclerView.setItemViewCacheSize(50);
@@ -98,7 +106,7 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
             public void run() {
                 mSwipeRefreshLayout.setRefreshing(true);
                 if (MainActivity.permissionGranted) {
-                    GetVideoList();
+                    FetchVideoList();
                     adapter.notifyDataSetChanged();
                 }
             }
@@ -131,34 +139,31 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
             });
         }
 
-        search_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        search_btn.setOnClickListener(v -> {
 
-                InputMethodManager imm = (InputMethodManager) Objects.requireNonNull(getContext()).getSystemService(Context.INPUT_METHOD_SERVICE);
-                if(!search_bar) {
-                    mEdit.setVisibility(View.VISIBLE);
-                    mEdit.requestFocus();
-                    mEdit.setShowSoftInputOnFocus(true);
-                    Objects.requireNonNull(imm).showSoftInput(mEdit, InputMethodManager.SHOW_FORCED);
-                    search_bar = true;
-                    search_btn.setBackgroundResource(R.drawable.ic_close_black_30dp);
-                }else{
-                    mEdit.setVisibility(View.GONE);
-                    search_bar = false;
-                    Objects.requireNonNull(imm).hideSoftInputFromWindow(mEdit.getWindowToken(),0);
-                    search_btn.setBackgroundResource(R.drawable.ic_search_black_48dp);
-                    adapter.FilteredNames(GetVideoList());
-                    mEdit.setText("");
-                }
-
+            InputMethodManager imm = (InputMethodManager) Objects.requireNonNull(getContext()).getSystemService(Context.INPUT_METHOD_SERVICE);
+            if(!search_bar) {
+                mEdit.setVisibility(View.VISIBLE);
+                mEdit.requestFocus();
+                mEdit.setShowSoftInputOnFocus(true);
+                Objects.requireNonNull(imm).showSoftInput(mEdit, InputMethodManager.SHOW_FORCED);
+                search_bar = true;
+                search_btn.setBackgroundResource(R.drawable.ic_close_black_30dp);
+            }else{
+                mEdit.setVisibility(View.GONE);
+                search_bar = false;
+                Objects.requireNonNull(imm).hideSoftInputFromWindow(mEdit.getWindowToken(),0);
+                search_btn.setBackgroundResource(R.drawable.ic_search_black_48dp);
+                adapter.FilteredNames(FetchVideoList());
+                mEdit.setText("");
             }
+
         });
     }
 
     @Override
     public void onRefresh() {
-        GetVideoList();
+        FetchVideoList();
         adapter.notifyDataSetChanged();
     }
 
@@ -209,6 +214,7 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
 
     private void ShowDetailsDialog()
     {
+        File file = new File(path);
         Dialog dialog = new Dialog(Objects.requireNonNull(getContext()));
         dialog.setContentView(R.layout.details_dialog);
         Objects.requireNonNull(dialog.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT
@@ -217,20 +223,15 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
         TextView detailPath = dialog.findViewById(R.id.detail_path);
         TextView detailModified = dialog.findViewById(R.id.detail_modified);
         TextView detailSize= dialog.findViewById(R.id.detail_size);
-        File file = new File(path);
         long date = file.lastModified();
-        Video video = GetVideoList().get(adapterPosition);
-        String size = getFileSize(video.size);
-        if(path!= null)
-        {
+        String size = getFileSize(file.length());
             name.setText(file.getName());
-            detailPath.setText(path);
+            detailPath.setText(file.getAbsolutePath());
 
             @SuppressLint("SimpleDateFormat") SimpleDateFormat sdf = new SimpleDateFormat("MMM dd,yyyy h:mm a");
             String dateString = sdf.format(date);
             detailModified.setText(dateString);
             detailSize.setText(size);
-        }
         dialog.show();
     }
 
@@ -251,7 +252,7 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
         final EditText editText = dialog.findViewById(R.id.rename_edit_text);
         Button cancel = dialog.findViewById(R.id.cancel_rename_button);
         Button rename_btn = dialog.findViewById(R.id.rename_button);
-        final File file = new File(path);
+        final File file = new File(FetchVideoList().get(adapterPosition).getAbsolutePath());
         String nameText = file.getName();
         nameText = nameText.substring(0,nameText.lastIndexOf("."));
         editText.setText(nameText);
@@ -287,7 +288,7 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
                 {
                     Toast.makeText(getContext(), "Oops! rename failed", Toast.LENGTH_SHORT).show();
                 }
-                GetVideoList();
+                FetchVideoList();
                 adapter.notifyDataSetChanged();
                 adapter.notifyItemChanged(adapterPosition);
                 dialog.dismiss();
@@ -300,11 +301,9 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
     private void ShareFile()
     {
         Intent intentShareFile = new Intent(Intent.ACTION_SEND);
-        File fileWithinMyDir = new File(path);
 
-        if(fileWithinMyDir.exists()) {
             intentShareFile.setType("video/*");
-            intentShareFile.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://"+path));
+            intentShareFile.putExtra(Intent.EXTRA_STREAM, Uri.parse(FetchVideoList().get(adapterPosition).getAbsolutePath()));
 
             String shareMessage= "\nLet me recommend you this awesome video player\n\n";
             shareMessage = shareMessage + "https://play.google.com/store/apps/details?id=" + BuildConfig.APPLICATION_ID +"\n\n";
@@ -314,94 +313,29 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
             intentShareFile.putExtra(Intent.EXTRA_TEXT, shareMessage);
 
             startActivity(Intent.createChooser(intentShareFile, "Share File"));
-        }
     }
 
     private void Filter(String text)
     {
-        List<Video> filtered = new ArrayList<>();
+        ArrayList<File> filtered = new ArrayList<>();
 
-        for(Video s : GetVideoList())
-        {
-            if(s.name!=null) {
-                if (s.name.toLowerCase().contains(text.toLowerCase())) {
-                    filtered.add(s);
-                }
-            }
-        }
+       for(File s: FetchVideoList())
+       {
+           if(s.getName().toLowerCase().contains(text.toLowerCase()))
+           {
+               filtered.add(s.getAbsoluteFile());
+           }
+       }
         adapter.FilteredNames(filtered);
     }
 
-    public List<Video> GetVideoList() {
-        List<Video> videoList = new ArrayList<Video>();
 
-        String[] projection = new String[]{
-                MediaStore.Video.Media._ID,
-                MediaStore.Video.Media.DISPLAY_NAME,
-                MediaStore.Video.Media.DURATION,
-                MediaStore.Video.Media.SIZE,
-                MediaStore.Video.Media.DATA
-        };
-        String selection = MediaStore.Video.Media.DURATION +
-                " >= ?";
-        String[] selectionArgs = new String[]{
-                String.valueOf(TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES))
-};
-        String sortOrder = MediaStore.Video.Media.DATE_ADDED + " ASC";
-
-        MyObserver observer = new MyObserver(null);
-        ContentResolver contentResolver = Objects.requireNonNull(getContext()).getContentResolver();
-        contentResolver.registerContentObserver(MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-                ,true,observer);
-        try (Cursor cursor = contentResolver.query(
-                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                projection,
-                null,
-                null,
-                sortOrder
-        )) {
-
-            int idColumn = Objects.requireNonNull(cursor).getColumnIndexOrThrow(MediaStore.Video.Media._ID);
-            int nameColumn =
-                    cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME);
-            int durationColumn =
-                    cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION);
-            int sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE);
-            int dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA);
-
-            if(cursor.moveToFirst()) {
-                while (cursor.moveToNext()) {
-                    long id = cursor.getLong(idColumn);
-                    String name = cursor.getString(nameColumn);
-                    int duration = cursor.getInt(durationColumn);
-                    int size = cursor.getInt(sizeColumn);
-                    String data = cursor.getString(dataColumn);
-                    Uri contentUri = ContentUris.withAppendedId(
-                            MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id);
-
-                    videoList.add(new Video(String.valueOf(contentUri), name, duration, size,data));
-                }
-            }
-            mSwipeRefreshLayout.setRefreshing(false);
-            Collections.reverse(videoList);
-            contentResolver.unregisterContentObserver(observer);
-            return videoList;
-        }
-    }
-
-    class MyObserver extends ContentObserver {
-        public MyObserver(Handler handler) {
-            super(handler);
-        }
-
-        @Override
-        public void onChange(boolean selfChange) {
-            this.onChange(selfChange, null);
-        }
-
-        @Override
-        public void onChange(boolean selfChange, Uri uri) {
-            GetVideoList();
-        }
+    @SuppressLint("NewApi")
+    private ArrayList<File> FetchVideoList()
+    {
+        Constant.allMediaList.sort((file, t1) -> Long.compare(file.lastModified(), t1.lastModified()));
+        Collections.reverse(Constant.allMediaList);
+        mSwipeRefreshLayout.setRefreshing(false);
+        return Constant.allMediaList;
     }
 }

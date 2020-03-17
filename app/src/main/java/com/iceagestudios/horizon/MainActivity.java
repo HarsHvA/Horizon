@@ -18,6 +18,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 
+import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
@@ -25,11 +26,14 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.iceagestudios.horizon.FetchVideos.Method;
+import com.iceagestudios.horizon.FetchVideos.StorageUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -44,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
     public static ArrayList<String> favoriteArrayList = new ArrayList<>();
     public static boolean permissionGranted;
     private FirebaseAnalytics firebaseAnalytics;
+    private File storage;
+    private String[] storagePaths;
 
     public static class PagerAdapter extends FragmentPagerAdapter
     {
@@ -94,6 +100,21 @@ public class MainActivity extends AppCompatActivity {
 
         Permissions();
 
+        LinearLayout linearLayout = findViewById(R.id.background_main_activity);
+        AnimationDrawable animationDrawable = (AnimationDrawable) linearLayout.getBackground();
+        animationDrawable.setEnterFadeDuration(2000);
+        animationDrawable.setExitFadeDuration(4000);
+        animationDrawable.start();
+
+        if (permissionGranted)
+        {
+            storagePaths = StorageUtil.getStorageDirectories(this);
+
+            for (String path : storagePaths) {
+                storage = new File(path);
+                Method.load_Directory_Files(storage);
+            }
+        }
         final ViewPager viewPager = findViewById(R.id.view_pager);
         viewPager.setAdapter(new PagerAdapter(getSupportFragmentManager(),1));
         btn = findViewById(R.id.search_btn);

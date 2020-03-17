@@ -9,12 +9,11 @@ import android.os.Handler;
 import java.io.File;
 
 public class Splash extends AppCompatActivity {
-    private File storage;
-    private String[] storagePaths;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+
 
         final Intent intent = new Intent(this,MainActivity.class);
         new Handler().postDelayed(new Runnable() {
@@ -23,6 +22,6 @@ public class Splash extends AppCompatActivity {
                     startActivity(intent);
                     finish();
             }
-        },5000);
+        },4000);
     }
 }

@@ -20,28 +20,26 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.iceagestudios.horizon.R;
-import com.iceagestudios.horizon.Video;
 import com.iceagestudios.horizon.VideoPlayer;
 import com.iceagestudios.horizon.VideosFrag;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 public class VideosRecyclerAdapter extends RecyclerView.Adapter<VideosRecyclerAdapter.Holder> {
 private Context context;
-private List<Video> videoList;
+private ArrayList<File> arrayList;
 private VideosFrag videosFrag;
 private EditText editText;
 
 public VideosRecyclerAdapter(Context context,VideosFrag videosFrag,EditText editText
-,List<Video> videoList)
+,ArrayList<File> arrayList)
 {
     this.context = context;
     this.videosFrag = videosFrag;
     this.editText = editText;
-    this.videoList = videoList;
+    this.arrayList = arrayList;
 }
     @NonNull
     @Override
@@ -53,20 +51,17 @@ public VideosRecyclerAdapter(Context context,VideosFrag videosFrag,EditText edit
     @SuppressLint("CheckResult")
     @Override
     public void onBindViewHolder(@NonNull final Holder holder, final int position) {
-    if(videoList!=null && videoList.size()>0) {
-        final Video video = videoList.get(position);
-        String name = video.name;
+        String name = arrayList.get(position).getName();
         if(name!=null) {
             name = name.substring(0, name.lastIndexOf("."));
         }
         holder.textView.setText(name);
-
         RequestOptions options = new RequestOptions().override(500, 700);
         options.centerCrop();
         RequestOptions requestOptions = RequestOptions
                 .diskCacheStrategyOf(DiskCacheStrategy.ALL);
         Glide.with(context)
-                .load(video.uri)
+                .load(arrayList.get(position).getAbsolutePath())
                 .placeholder(R.drawable.ic_launcher_background)
                 .apply(options)
                 .dontAnimate()
@@ -75,28 +70,20 @@ public VideosRecyclerAdapter(Context context,VideosFrag videosFrag,EditText edit
 
         final InputMethodManager imm = (InputMethodManager)
                 context.getSystemService(Context.INPUT_METHOD_SERVICE);
-        holder.cardView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(context, VideoPlayer.class);
-                intent.putExtra("VideoPath", String.valueOf(video.uri));
-                intent.putExtra("VideoName", video.name);
-                context.startActivity(intent);
-                Objects.requireNonNull(imm).hideSoftInputFromWindow(editText.getWindowToken(), 0);
-            }
+        holder.cardView.setOnClickListener(v -> {
+            Intent intent = new Intent(context, VideoPlayer.class);
+            intent.putExtra("VideoPath", arrayList.get(position).getAbsolutePath());
+            intent.putExtra("VideoName", arrayList.get(position).getName());
+            context.startActivity(intent);
+            Objects.requireNonNull(imm).hideSoftInputFromWindow(editText.getWindowToken(), 0);
         });
-        holder.imageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                videosFrag.ShowMenuDialog(video.data,position);
-            }
-        });
-    }
+        holder.imageButton.setOnClickListener(view ->
+                videosFrag.ShowMenuDialog(arrayList.get(position).getAbsolutePath(),position));
     }
 
     @Override
     public int getItemCount() {
-        return videoList.size();
+        return arrayList.size();
     }
 
     class Holder extends RecyclerView.ViewHolder{
@@ -114,9 +101,9 @@ public VideosRecyclerAdapter(Context context,VideosFrag videosFrag,EditText edit
         }
     }
 
-    public void FilteredNames(List<Video> filteredFiles)
+    public void FilteredNames(ArrayList<File> filteredFiles)
     {
-        videoList = filteredFiles;
+        arrayList = filteredFiles;
         notifyDataSetChanged();
     }
 }
