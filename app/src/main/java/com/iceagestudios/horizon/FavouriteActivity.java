@@ -47,7 +47,7 @@ public class FavouriteActivity extends AppCompatActivity implements SwipeRefresh
         {
             textView.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
-            StaggeredGridLayoutManager manager = new StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL);
+            StaggeredGridLayoutManager manager = new StaggeredGridLayoutManager(3, LinearLayoutManager.VERTICAL);
             recyclerView.setLayoutManager(manager);
             recyclerView.setHasFixedSize(true);
             recyclerView.setItemViewCacheSize(50);

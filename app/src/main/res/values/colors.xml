@@ -9,4 +9,5 @@
     <color name="swipe_re">#6E51FF</color>
     <color name="card_color">#000</color>
     <color name="main_color">#000</color>
+    <color name="bottom_sheet_text_image_color">#fff</color>
 </resources>

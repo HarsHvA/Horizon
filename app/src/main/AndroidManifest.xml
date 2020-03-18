@@ -258,7 +258,6 @@
         </activity>
         <activity android:name=".VideoFilesActivity" />
         <activity android:name=".FavouriteActivity" />
-        <activity android:name=".InfoActivity" />
         <activity android:name=".MainActivity"/>
 
         <meta-data
