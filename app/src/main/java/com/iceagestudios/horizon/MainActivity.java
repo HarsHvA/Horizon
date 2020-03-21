@@ -35,6 +35,7 @@ import android.widget.Toast;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.iceagestudios.horizon.FetchVideos.Constant;
 import com.iceagestudios.horizon.FetchVideos.Method;
 import com.iceagestudios.horizon.FetchVideos.StorageUtil;
 import com.mikepenz.aboutlibraries.Libs;
@@ -50,7 +51,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private File storage;
     private String[] storagePaths;
     private ImageButton btn;
-    public static ArrayList<String> favoriteArrayList = new ArrayList<>();
     public static boolean permissionGranted;
     private FirebaseAnalytics firebaseAnalytics;
 
@@ -99,10 +99,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             switch (position)
             {
                 case 0:
-                    return new VideosFrag();
+                    return new FoldersFrag();
 
                 case 1:
-                    return new FoldersFrag();
+                    return new VideosFrag();
 
                 default: return null;
             }
@@ -118,10 +118,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             switch (position)
             {
                 case 0:
-                    return "All videos";
+                    return "Home";
 
                 case 1:
-                    return "Folders";
+                    return "All Videos";
 
                 default:
                     return null;
@@ -140,7 +140,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         LinearLayout linearLayout = findViewById(R.id.background_main_activity);
         AnimationDrawable animationDrawable = (AnimationDrawable) linearLayout.getBackground();
         animationDrawable.setEnterFadeDuration(2000);
-        animationDrawable.setExitFadeDuration(4000);
+        animationDrawable.setExitFadeDuration(3000);
         animationDrawable.start();
 
         final ViewPager viewPager = findViewById(R.id.view_pager);
@@ -154,10 +154,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 viewPager.setCurrentItem(tab.getPosition());
                 if(viewPager.getCurrentItem() == 0)
                 {
-                    btn.setVisibility(View.VISIBLE);
+                    btn.setVisibility(View.INVISIBLE);
                 }else
                 {
-                    btn.setVisibility(View.INVISIBLE);
+                    btn.setVisibility(View.VISIBLE);
                 }
             }
 
@@ -215,31 +215,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         onlineEditText.setShowSoftInputOnFocus(true);
         imm.showSoftInput(onlineEditText, InputMethodManager.SHOW_FORCED);
         Button cancel = dialog.findViewById(R.id.cancel_online_sub);
-        cancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                dialog.dismiss();
-            }
-        });
+        cancel.setOnClickListener(view -> dialog.dismiss());
         Button add = dialog.findViewById(R.id.add_online_sub);
         add.setText("Play");
-        add.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String url = onlineEditText.getText().toString();
-                    Intent intent = new Intent(MainActivity.this, VideoPlayer.class);
-                    intent.putExtra("VideoPath", url);
-                    intent.putExtra("VideoName", "Stream");
-                    startActivity(intent);
-                dialog.dismiss();
-            }
+        add.setOnClickListener(view -> {
+            String url = onlineEditText.getText().toString();
+                Intent intent = new Intent(MainActivity.this, VideoPlayer.class);
+                intent.putExtra("VideoPath", url);
+                intent.putExtra("VideoName", "Stream");
+                startActivity(intent);
+            dialog.dismiss();
         });
 
     }
     private void FetchVideoFiles()
     {
         storagePaths = StorageUtil.getStorageDirectories(this);
-
+        Constant.allMediaList.clear();
+        Constant.allMediaFoldersList.clear();
         for (String path : storagePaths) {
             storage = new File(path);
             Method.load_Directory_Files(storage);

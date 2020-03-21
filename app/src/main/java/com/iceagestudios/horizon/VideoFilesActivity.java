@@ -1,5 +1,6 @@
 package com.iceagestudios.horizon;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -10,6 +11,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.drawable.AnimationDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -29,6 +31,8 @@ import android.widget.Toast;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.iceagestudios.horizon.Adapters.VideoFileActivityAdapter;
+import com.iceagestudios.horizon.FetchVideos.Constant;
+import com.snatik.storage.Storage;
 
 import java.io.File;
 import java.text.DecimalFormat;
@@ -38,14 +42,11 @@ import java.util.Collections;
 import java.util.Objects;
 
 public class VideoFilesActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener, View.OnClickListener {
-    private int position;
     private ArrayList<File> folVideosArList = new ArrayList<>();
     RecyclerView recyclerView;
     SwipeRefreshLayout mSwipeRefreshLayout;
     VideoFileActivityAdapter mAdapter;
     FoldersFrag Folders;
-    File[] listFile;
-    boolean listPermission;
     Button btn;
     Button closeBtn;
     EditText editText;
@@ -54,7 +55,10 @@ public class VideoFilesActivity extends AppCompatActivity implements SwipeRefres
     String path;
     int adapterPosition;
     private FirebaseAnalytics firebaseAnalytics;
+    String uri;
+    String folderName;
 
+    File directory;
     private Dialog main_dialog;
     LinearLayout renameLayout;
     LinearLayout shareLayout;
@@ -66,23 +70,28 @@ public class VideoFilesActivity extends AppCompatActivity implements SwipeRefres
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_video_files);
 
+        LinearLayout linearLayout = findViewById(R.id.video_file_activty_background);
+        AnimationDrawable animationDrawable = (AnimationDrawable) linearLayout.getBackground();
+        animationDrawable.setEnterFadeDuration(2000);
+        animationDrawable.setExitFadeDuration(3000);
+        animationDrawable.start();
         firebaseAnalytics = FirebaseAnalytics.getInstance(this);
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
         Intent intent = getIntent();
-        saveFavoriteList = new SaveFavoriteList(this);
-        position = intent.getIntExtra("Position",-1);
+        uri = intent.getStringExtra("uri");
+        folderName = intent.getStringExtra("FolderName");
+        directory = new File(uri);
+        saveFavoriteList = new SaveFavoriteList();
         btn = findViewById(R.id.search_btn_video_activity);
         closeBtn = findViewById(R.id.close_activity);
         search_bar = false;
         editText = findViewById(R.id.searchEditText);
         txt = findViewById(R.id.folderName);
-        txt.setText(Folders.foldersArrayList.get(position).getName());
+        txt.setText(folderName);
         folVideosArList.clear();
-        listFile = Folders.foldersArrayList.get(position).listFiles();
         if(MainActivity.permissionGranted)
         {
-            listPermission = true;
             editText.addTextChangedListener(new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -110,89 +119,65 @@ public class VideoFilesActivity extends AppCompatActivity implements SwipeRefres
         recyclerView.setDrawingCacheEnabled(true);
         recyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
 
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                if(!search_bar) {
-                    editText.setVisibility(View.VISIBLE);
-                    search_bar = true;
-                    editText.requestFocus();
-                    editText.setShowSoftInputOnFocus(true);
-                    imm.showSoftInput(editText,InputMethodManager.SHOW_FORCED);
-                    btn.setBackgroundResource(R.drawable.ic_close_black_24dp);
-                }else{
-                    editText.setVisibility(View.GONE);
-                    search_bar = false;
-                    imm.hideSoftInputFromWindow(editText.getWindowToken(),0);
-                    btn.setBackgroundResource(R.drawable.ic_search_black_24dp);
-                    mAdapter.FilteredNames(folVideosArList);
-                    editText.setText("");
-                }
+        btn.setOnClickListener(v -> {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if(!search_bar) {
+                editText.setVisibility(View.VISIBLE);
+                search_bar = true;
+                editText.requestFocus();
+                editText.setShowSoftInputOnFocus(true);
+                imm.showSoftInput(editText,InputMethodManager.SHOW_FORCED);
+                btn.setBackgroundResource(R.drawable.ic_close_black_24dp);
+            }else{
+                editText.setVisibility(View.GONE);
+                search_bar = false;
+                imm.hideSoftInputFromWindow(editText.getWindowToken(),0);
+                btn.setBackgroundResource(R.drawable.ic_search_black_24dp);
+                mAdapter.FilteredNames(folVideosArList);
+                editText.setText("");
             }
         });
 
-        closeBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        closeBtn.setOnClickListener(v -> finish());
         mSwipeRefreshLayout = findViewById(R.id.video_swipe_refresh);
         mSwipeRefreshLayout.setOnRefreshListener(this);
         mSwipeRefreshLayout.setColorSchemeResources(R.color.swipe_re,
                 android.R.color.holo_green_dark,
                 android.R.color.holo_orange_dark,
                 android.R.color.holo_blue_dark);
-        mSwipeRefreshLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                mSwipeRefreshLayout.setRefreshing(true);
-                if (MainActivity.permissionGranted) {
-                    folVideosArList.clear();
-                    GetVideos();
-                    mAdapter.notifyDataSetChanged();
-                }
+        mSwipeRefreshLayout.post(() -> {
+            mSwipeRefreshLayout.setRefreshing(true);
+            if (MainActivity.permissionGranted) {
+                folVideosArList.clear();
+                GetVideos(directory);
+                mAdapter.notifyDataSetChanged();
             }
         });
 
     }
 
-    public ArrayList<File> GetVideos()
+    public ArrayList<File> GetVideos(File directory)
     {
-
-        mSwipeRefreshLayout.setRefreshing(true);
-        ContentResolver contentResolver = getContentResolver();
-        Uri videoUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-        String sortOrder = MediaStore.Video.Media.DATE_MODIFIED+ " ASC";
-        Cursor cursor = contentResolver.query(videoUri,null,null,null,sortOrder);
-        try {
-            if (cursor != null && cursor.moveToFirst()) {
-                int videoPath = cursor.getColumnIndex(MediaStore.Video.Media.DATA);
-                do {
-
-                    String path = cursor.getString(videoPath);
-                    File file = new File(path);
-                    for(int i =0;i<listFile.length;i++)
-                    {
-                        if(file.getName().equals(listFile[i].getName()))
-                        {
-                            folVideosArList.add(file);
+        File[] fileList = directory.listFiles();
+        if(fileList != null && fileList.length > 0){
+            for (int i=0; i<fileList.length; i++){
+                if(fileList[i].isDirectory()){
+                        GetVideos(fileList[i]);
+                }
+                else {
+                    String name = fileList[i].getName().toLowerCase();
+                    for (String extension: Constant.videoExtensions){
+                        //check the type of file
+                        if(name.endsWith(extension)){
+                            folVideosArList.add(fileList[i]);
+                            //when we found file
+                            break;
                         }
                     }
-
-
-                } while (cursor.moveToNext());
-
-                mSwipeRefreshLayout.setRefreshing(false);
+                }
             }
-        }catch (Exception e)
-        {
-            Log.i("CursorHandleException", e.getMessage());
-            mSwipeRefreshLayout.setRefreshing(false);
         }
-
-        Collections.reverse(folVideosArList);
+        mSwipeRefreshLayout.setRefreshing(false);
         return folVideosArList;
     }
 
@@ -228,12 +213,32 @@ public class VideoFilesActivity extends AppCompatActivity implements SwipeRefres
                 main_dialog.dismiss();
                 break;
             case R.id.favorite:
-               // MainActivity.favoriteArrayList.add(path);
-                saveFavoriteList.SaveArrayList();
+                saveFavoriteList.SaveArrayList(this,path,true);
                 Toast.makeText(this, "Added to favorite!", Toast.LENGTH_SHORT).show();
                 main_dialog.dismiss();
                 break;
+
+            case R.id.delete:
+                DeleteFile(path);
+                main_dialog.dismiss();
+                break;
         }
+    }
+
+    public void DeleteFile(String path) {
+        new AlertDialog
+                .Builder(this,R.style.AlertDialogStyle).setTitle("Delete Video")
+                .setMessage("Are you sure you want to delete this video?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    Storage storage = new Storage(this);
+                    storage.deleteFile(path);
+                    Intent intent = getIntent();
+                    finish();
+                    startActivity(intent);
+                })
+                .setNegativeButton("Cancel",null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 
     public void ShowMenuDialog(String path,int adapterPosition) {
@@ -246,7 +251,9 @@ public class VideoFilesActivity extends AppCompatActivity implements SwipeRefres
         shareLayout = main_dialog.findViewById(R.id.share);
         detailsLayout = main_dialog.findViewById(R.id.details);
         LinearLayout favorite = main_dialog.findViewById(R.id.favorite);
+        LinearLayout delete = main_dialog.findViewById(R.id.delete);
         favorite.setOnClickListener(this);
+        delete.setOnClickListener(this);
         renameLayout.setOnClickListener(this);
         shareLayout.setOnClickListener(this);
         detailsLayout.setOnClickListener(this);
@@ -257,7 +264,7 @@ public class VideoFilesActivity extends AppCompatActivity implements SwipeRefres
     public void onRefresh() {
 
         folVideosArList.clear();
-        GetVideos();
+        GetVideos(directory);
         mAdapter.notifyDataSetChanged();
     }
 
@@ -311,45 +318,37 @@ public class VideoFilesActivity extends AppCompatActivity implements SwipeRefres
         editText.setText(nameTxt);
         editText.requestFocus();
         dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-        cancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        rename_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String ext = file.getAbsolutePath();
-                ext = ext.substring(ext.lastIndexOf("."));
-                String onlyPath = file.getParentFile().getAbsolutePath();
-                String newPath = onlyPath+"/"+editText.getText().toString()+ext;
-                File newFile = new File(newPath);
-                boolean rename = file.renameTo(newFile);
-                if(rename)
-                {
-                    ContentResolver resolver = getApplicationContext().getContentResolver();
-                    resolver.delete(
-                            MediaStore.Files.getContentUri("external")
-                            , MediaStore.MediaColumns.DATA + "=?", new String[] { file.getAbsolutePath() });
-                    Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                    intent.setData(Uri.fromFile(newFile));
-                    getApplicationContext().sendBroadcast(intent);
+        cancel.setOnClickListener(v -> dialog.dismiss());
+        rename_btn.setOnClickListener(v -> {
+            String ext = file.getAbsolutePath();
+            ext = ext.substring(ext.lastIndexOf("."));
+            String onlyPath = file.getParentFile().getAbsolutePath();
+            String newPath = onlyPath+"/"+editText.getText().toString()+ext;
+            File newFile = new File(newPath);
+            boolean rename = file.renameTo(newFile);
+            if(rename)
+            {
+                ContentResolver resolver = getApplicationContext().getContentResolver();
+                resolver.delete(
+                        MediaStore.Files.getContentUri("external")
+                        , MediaStore.MediaColumns.DATA + "=?", new String[] { file.getAbsolutePath() });
+                Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                intent.setData(Uri.fromFile(newFile));
+                getApplicationContext().sendBroadcast(intent);
 
-                    Toast.makeText(getApplicationContext(), "SuccessFull!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "SuccessFull!", Toast.LENGTH_SHORT).show();
 
-                }else
-                {
-                    Toast.makeText(getApplicationContext(), "Oops! rename failed", Toast.LENGTH_SHORT).show();
-                }
-                folVideosArList.clear();
-                GetVideos();
-                mAdapter.notifyDataSetChanged();
-                mAdapter.notifyItemChanged(adapterPosition);
-                finish();
-                startActivity(getIntent());
-                dialog.dismiss();
+            }else
+            {
+                Toast.makeText(getApplicationContext(), "Oops! rename failed", Toast.LENGTH_SHORT).show();
             }
+            folVideosArList.clear();
+            GetVideos(directory);
+            mAdapter.notifyDataSetChanged();
+            mAdapter.notifyItemChanged(adapterPosition);
+            finish();
+            startActivity(getIntent());
+            dialog.dismiss();
         });
         mAdapter.notifyDataSetChanged();
         dialog.show();

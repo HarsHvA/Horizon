@@ -11,4 +11,5 @@ public class Constant {
 
     //all loaded files will be here
     public static ArrayList<File> allMediaList = new ArrayList<>();
+    public static ArrayList<File> allMediaFoldersList = new ArrayList<>();
 }

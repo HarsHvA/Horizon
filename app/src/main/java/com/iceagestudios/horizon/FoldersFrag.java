@@ -1,6 +1,7 @@
 package com.iceagestudios.horizon;
 
 
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.net.Uri;
@@ -20,11 +21,15 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.iceagestudios.horizon.Adapters.FolderRecyclerAdapter;
+import com.iceagestudios.horizon.Adapters.HistoryAdapter;
+import com.iceagestudios.horizon.FetchVideos.Constant;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,12 +39,14 @@ import java.util.Set;
  */
 public class FoldersFrag extends Fragment implements SwipeRefreshLayout.OnRefreshListener{
     RecyclerView folderRecyclerView;
+    RecyclerView historyRecyclerView;
     FolderRecyclerAdapter mAdapter;
-    boolean listPermission;
-    public static ArrayList<File> foldersArrayList = new ArrayList<>();
-    File directory;
-    File directory_sd;
+    HistoryAdapter adapter;
     SwipeRefreshLayout mSwipeRefreshLayout;
+    History history = new History();
+    ArrayList<File> historyList = new ArrayList<>();
+    TextView historyListSizeText;
+    TextView foldersListSizeText;
 
     public FoldersFrag() {
         // Required empty public constructor
@@ -50,6 +57,9 @@ public class FoldersFrag extends Fragment implements SwipeRefreshLayout.OnRefres
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_folders, container, false);
+        historyListSizeText = rootView.findViewById(R.id.historyListSizeText);
+        foldersListSizeText = rootView.findViewById(R.id.foldersListSizeText);
+        HistoryView(true,rootView);
         folderRecyclerView = rootView.findViewById(R.id.foldersRecyclerView);
         StaggeredGridLayoutManager manager = new StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL);
         folderRecyclerView.setLayoutManager(manager);
@@ -64,74 +74,101 @@ public class FoldersFrag extends Fragment implements SwipeRefreshLayout.OnRefres
                 android.R.color.holo_green_dark,
                 android.R.color.holo_orange_dark,
                 android.R.color.holo_blue_dark);
-        mSwipeRefreshLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                mSwipeRefreshLayout.setRefreshing(true);
-                if (MainActivity.permissionGranted) {
+        mSwipeRefreshLayout.post(() -> {
+            mSwipeRefreshLayout.setRefreshing(true);
+            if (MainActivity.permissionGranted) {
 
-                    foldersArrayList.clear();
-                    GetFolders();
-                    mAdapter.notifyDataSetChanged();
-                }
+                HistoryList();
+                adapter.notifyDataSetChanged();
+                GetFolders();
+                SetFoldersListSizeText(GetFolders().size());
+                mAdapter.notifyDataSetChanged();
             }
         });
         return rootView;
     }
 
+    @SuppressLint("NewApi")
     private ArrayList<File> GetFolders()
     {
-
-        mSwipeRefreshLayout.setRefreshing(true);
-        ContentResolver contentResolver = getContext().getContentResolver();
-        Uri videoUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-        String sortOrder = MediaStore.Video.Media.DATE_MODIFIED+ " ASC";
-        Cursor cursor = contentResolver.query(videoUri,null,null,null,sortOrder);
-        try {
-            if (cursor != null && cursor.moveToFirst()) {
-                int videoPath = cursor.getColumnIndex(MediaStore.Video.Media.DATA);
-                do {
-
-                    String path = cursor.getString(videoPath);
-                    File file = new File(path);
-                    foldersArrayList.add(file.getParentFile());
-                    Set<File> set = new HashSet<>(foldersArrayList);
-                    foldersArrayList.clear();
-                    foldersArrayList.addAll(set);
-
-                } while (cursor.moveToNext());
-                mSwipeRefreshLayout.setRefreshing(false);
-
-            }
-        }catch (Exception e)
-        {
-            Log.i("CursorHandleException", e.getMessage());
-            mSwipeRefreshLayout.setRefreshing(false);
-        }
-        return foldersArrayList;
+       ArrayList<File> arrayList;
+        Constant.allMediaFoldersList.sort((file, t1) -> Long.compare(file.lastModified(), t1.lastModified()));
+        Collections.reverse(Constant.allMediaFoldersList);
+        mSwipeRefreshLayout.setRefreshing(false);
+        arrayList = Constant.allMediaFoldersList;
+        Set<File> set = new HashSet<>(arrayList);
+        arrayList.clear();
+        arrayList.addAll(set);
+        return arrayList;
     }
 
     @Override
     public void onRefresh() {
 
-        foldersArrayList.clear();
+        HistoryList();
+        adapter.notifyDataSetChanged();
+        SetSizeText(HistoryList().size());
         GetFolders();
         mAdapter.notifyDataSetChanged();
+        SetFoldersListSizeText(GetFolders().size());
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        directory = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-        Log.i("Path_I", Environment.getExternalStorageDirectory().getAbsolutePath());
-        directory_sd = new File("/storage/");
-        foldersArrayList.clear();
-        mAdapter = new FolderRecyclerAdapter(getContext(),foldersArrayList);
+        mAdapter = new FolderRecyclerAdapter(getContext(),GetFolders());
         folderRecyclerView.setAdapter(mAdapter);
-        if(MainActivity.permissionGranted)
-        {
-            listPermission=true;
+        SetSizeText(HistoryList().size());
+        SetFoldersListSizeText(GetFolders().size());
+    }
+
+    public ArrayList<File> HistoryList()
+    {
+        historyList.clear();
+            if(history.FetchHistory(getContext())!=null && history.FetchHistory(getContext()).size()>0) {
+                for (int i = 0; i < history.FetchHistory(getContext()).size(); i++) {
+                    historyList.add(new File(history.FetchHistory(getContext()).get(i)));
+                }
+            }
+            return historyList;
+    }
+
+    private void HistoryView(boolean proActivated,View rootView)
+    {
+        if(proActivated) {
+            historyRecyclerView = rootView.findViewById(R.id.historyRecyclerView);
+            LinearLayoutManager manager = new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false);
+            historyRecyclerView.setLayoutManager(manager);
+            historyRecyclerView.setAdapter(mAdapter);
+            historyRecyclerView.setHasFixedSize(true);
+            historyRecyclerView.setItemViewCacheSize(20);
+            historyRecyclerView.setDrawingCacheEnabled(true);
+            historyRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
+            adapter = new HistoryAdapter(getContext(), HistoryList(),this);
+            historyRecyclerView.setAdapter(adapter);
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        HistoryList();
+        GetFolders();
+        SetSizeText(HistoryList().size());
+        SetFoldersListSizeText(GetFolders().size());
+        adapter.notifyDataSetChanged();
+        mAdapter.notifyDataSetChanged();
+    }
+    public void SetSizeText(int size)
+    {
+        String size1 = " ("+size+")";
+        historyListSizeText.setText(size1);
+    }
+
+    public void SetFoldersListSizeText(int size)
+    {
+        String size2 = " ("+size+")";
+        foldersListSizeText.setText(size2);
     }
 }

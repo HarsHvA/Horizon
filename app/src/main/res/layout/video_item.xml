@@ -41,6 +41,7 @@
                     android:layout_marginTop="2dp"
                     android:background="@android:color/transparent"
                     android:ellipsize="end"
+                    android:maxEms="8"
                     android:fontFamily="@font/acme"
                     android:maxLines="1"
                     android:padding="8dp"

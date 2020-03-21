@@ -7,8 +7,8 @@ android {
         applicationId "com.iceagestudios.horizon"
         minSdkVersion 22
         targetSdkVersion 29
-        versionCode 8
-        versionName "5.03"
+        versionCode 9
+        versionName "5.04"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
@@ -27,6 +27,7 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'com.snatik:storage:2.1.0'
     implementation 'com.google.android.exoplayer:exoplayer:2.10.4'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'

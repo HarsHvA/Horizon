@@ -1069,6 +1069,13 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
     @Override
     protected void onStop() {
         super.onStop();
+        History history = new History();
+        history.SaveHistory(this,String.valueOf(VideoUrl()),true);
         savedUrl.edit().putLong(String.valueOf(VideoUrl()),exoPlayer.getCurrentPosition()).apply();
+    }
+
+    public void FinishPlayerActivity(View view)
+    {
+        finish();
     }
 }

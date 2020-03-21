@@ -51,14 +51,12 @@ public class FolderRecyclerAdapter extends RecyclerView.Adapter<FolderRecyclerAd
             }
         }
         holder.mTextNumb.setText(noOfVideos+" Videos");
-        holder.mCardView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(mContext, VideoFilesActivity.class);
-                intent.putExtra("Position",position);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                mContext.startActivity(intent);
-            }
+        holder.mCardView.setOnClickListener(v -> {
+            Intent intent = new Intent(mContext, VideoFilesActivity.class);
+            intent.putExtra("uri",foldersArrayList.get(position).getAbsolutePath());
+            intent.putExtra("FolderName",foldersArrayList.get(position).getName());
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(intent);
         });
 
     }

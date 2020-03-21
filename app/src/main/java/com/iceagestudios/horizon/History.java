@@ -4,44 +4,45 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import org.json.JSONArray;
+import org.json.JSONException;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
-public class SaveFavoriteList {
-    private ArrayList<String> pathList = new ArrayList<>();
-    private SharedPreferences sharedPreferences;
-
-    public void SaveArrayList(Context context, String url,boolean save)
+public class History {
+ private ArrayList<String> pathList = new ArrayList<>();
+ private Context context;
+ private SharedPreferences sharedPreferences;
+    public void SaveHistory(Context context,String url,boolean save)
     {
-        RetriveArrayList(context);
+        FetchHistory(context);
         if(save)
         {
             pathList.add(url);
             sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-            Set<String> set = new LinkedHashSet<>(pathList);
-            sharedPreferences.edit().putStringSet("FavoriteList",set).apply();
+            LinkedHashSet<String> set = new LinkedHashSet<>(pathList);
+            sharedPreferences.edit().putStringSet("History",set).apply();
+
         }
         else
         {
             pathList.remove(url);
             sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-            Set<String> set = new LinkedHashSet<>(pathList);
-            sharedPreferences.edit().putStringSet("FavoriteList",set).apply();
+            LinkedHashSet<String> set = new LinkedHashSet<>(pathList);
+            sharedPreferences.edit().putStringSet("History",set).apply();
         }
+
     }
 
-    public ArrayList<String> RetriveArrayList(Context context)
+    public ArrayList<String> FetchHistory(Context context)
     {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-        Set<String> newSet = sharedPreferences.getStringSet("FavoriteList",null);
+        Set<String> newSet =  sharedPreferences.getStringSet("History",null);
         if(newSet!=null)
         {
             pathList.clear();

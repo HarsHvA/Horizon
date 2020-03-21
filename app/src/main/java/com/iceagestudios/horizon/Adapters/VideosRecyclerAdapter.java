@@ -11,8 +11,10 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.TooltipCompat;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -70,12 +72,17 @@ public VideosRecyclerAdapter(Context context,VideosFrag videosFrag,EditText edit
 
         final InputMethodManager imm = (InputMethodManager)
                 context.getSystemService(Context.INPUT_METHOD_SERVICE);
+        String finalName = name;
         holder.cardView.setOnClickListener(v -> {
             Intent intent = new Intent(context, VideoPlayer.class);
             intent.putExtra("VideoPath", arrayList.get(position).getAbsolutePath());
             intent.putExtra("VideoName", arrayList.get(position).getName());
             context.startActivity(intent);
             Objects.requireNonNull(imm).hideSoftInputFromWindow(editText.getWindowToken(), 0);
+        });
+        holder.cardView.setOnLongClickListener(view -> {
+            Toast.makeText(context, finalName, Toast.LENGTH_SHORT).show();
+            return true;
         });
         holder.imageButton.setOnClickListener(view ->
                 videosFrag.ShowMenuDialog(arrayList.get(position).getAbsolutePath(),position));

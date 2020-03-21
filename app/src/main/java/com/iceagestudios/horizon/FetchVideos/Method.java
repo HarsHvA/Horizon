@@ -8,7 +8,8 @@ public class Method {
         if(fileList != null && fileList.length > 0){
             for (int i=0; i<fileList.length; i++){
                 if(fileList[i].isDirectory()){
-                    if(fileList[i].getName().contains("cache"))
+                    if(fileList[i].getName().contains("cache") || fileList[i].getName().contains("Android")
+                    || fileList[i].getName().contains("stories")|| fileList[i].getName().contains(".Statuses"))
                     {
 
                     }else
@@ -22,6 +23,7 @@ public class Method {
                         //check the type of file
                         if(name.endsWith(extension)){
                             Constant.allMediaList.add(fileList[i]);
+                            Constant.allMediaFoldersList.add(fileList[i].getParentFile());
                             //when we found file
                             break;
                         }

@@ -6,8 +6,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -30,17 +32,21 @@ public class FavouriteActivity extends AppCompatActivity implements SwipeRefresh
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_favourite);
 
+        LinearLayout linearLayout = findViewById(R.id.favourite_activity_background);
+        AnimationDrawable animationDrawable = (AnimationDrawable) linearLayout.getBackground();
+        animationDrawable.setEnterFadeDuration(2000);
+        animationDrawable.setExitFadeDuration(3000);
+        animationDrawable.start();
         firebaseAnalytics = FirebaseAnalytics.getInstance(this);
-        saveFavoriteList = new SaveFavoriteList(this);
-        saveFavoriteList.RetriveArrayList();
+        saveFavoriteList = new SaveFavoriteList();
         arrayList = new ArrayList<>();
         textView = findViewById(R.id.text_view);
         recyclerView = findViewById(R.id.favorite_recycler_view);
         adapter = new FavoriteAdapter(this,arrayList);
         swipeRefreshLayout = findViewById(R.id.favoriteSwipeRefresh);
-        if(MainActivity.favoriteArrayList!=null && MainActivity.favoriteArrayList.size()>0) {
-            for (int i = 0; i < MainActivity.favoriteArrayList.size(); i++) {
-                arrayList.add(new File(MainActivity.favoriteArrayList.get(i)));
+        if(saveFavoriteList.RetriveArrayList(this)!=null && saveFavoriteList.RetriveArrayList(this).size()>0) {
+            for (int i = 0; i < saveFavoriteList.RetriveArrayList(this).size(); i++) {
+                arrayList.add(new File(saveFavoriteList.RetriveArrayList(this).get(i)));
             }
         }
         if(arrayList!=null && arrayList.size()>0)
@@ -67,28 +73,25 @@ public class FavouriteActivity extends AppCompatActivity implements SwipeRefresh
                 android.R.color.holo_orange_dark,
                 android.R.color.holo_blue_dark);
 
-        swipeRefreshLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                swipeRefreshLayout.setRefreshing(true);
-                arrayList.clear();
-                if(MainActivity.favoriteArrayList!=null && MainActivity.favoriteArrayList.size()>0) {
-                    for (int i = 0; i < MainActivity.favoriteArrayList.size(); i++) {
-                        arrayList.add(new File(MainActivity.favoriteArrayList.get(i)));
-                    }
+        swipeRefreshLayout.post(() -> {
+            swipeRefreshLayout.setRefreshing(true);
+            arrayList.clear();
+            if(saveFavoriteList.RetriveArrayList(this)!=null && saveFavoriteList.RetriveArrayList(this).size()>0) {
+                for (int i = 0; i < saveFavoriteList.RetriveArrayList(this).size(); i++) {
+                    arrayList.add(new File(saveFavoriteList.RetriveArrayList(this).get(i)));
                 }
-                if(arrayList!=null && arrayList.size()>0)
-                {
-                    recyclerView.setVisibility(View.VISIBLE);
-                    textView.setVisibility(View.GONE);
-                }else if(arrayList==null)
-                {
-                    recyclerView.setVisibility(View.GONE);
-                    textView.setVisibility(View.VISIBLE);
-                }
-                adapter.notifyDataSetChanged();
-                swipeRefreshLayout.setRefreshing(false);
             }
+            if(arrayList!=null && arrayList.size()>0)
+            {
+                recyclerView.setVisibility(View.VISIBLE);
+                textView.setVisibility(View.GONE);
+            }else if(arrayList==null)
+            {
+                recyclerView.setVisibility(View.GONE);
+                textView.setVisibility(View.VISIBLE);
+            }
+            adapter.notifyDataSetChanged();
+            swipeRefreshLayout.setRefreshing(false);
         });
     }
 
@@ -96,9 +99,9 @@ public class FavouriteActivity extends AppCompatActivity implements SwipeRefresh
     public void onRefresh() {
         swipeRefreshLayout.setRefreshing(true);
         arrayList.clear();
-        if(MainActivity.favoriteArrayList!=null && MainActivity.favoriteArrayList.size()>0) {
-            for (int i = 0; i < MainActivity.favoriteArrayList.size(); i++) {
-                arrayList.add(new File(MainActivity.favoriteArrayList.get(i)));
+        if(saveFavoriteList.RetriveArrayList(this)!=null && saveFavoriteList.RetriveArrayList(this).size()>0) {
+            for (int i = 0; i < saveFavoriteList.RetriveArrayList(this).size(); i++) {
+                arrayList.add(new File(saveFavoriteList.RetriveArrayList(this).get(i)));
             }
         }
 

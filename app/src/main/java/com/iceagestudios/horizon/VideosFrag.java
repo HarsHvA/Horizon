@@ -6,6 +6,7 @@ import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
@@ -15,6 +16,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -42,6 +44,7 @@ import android.widget.Toast;
 import com.google.android.exoplayer2.C;
 import com.iceagestudios.horizon.Adapters.VideosRecyclerAdapter;
 import com.iceagestudios.horizon.FetchVideos.Constant;
+import com.snatik.storage.Storage;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,7 +90,7 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
         mEdit = view.findViewById(R.id.editText);
         mSwipeRefreshLayout = view.findViewById(R.id.swipe_refresh);
         adapter = new VideosRecyclerAdapter(getContext(),this,mEdit,FetchVideoList());
-        saveFavoriteList = new SaveFavoriteList(getContext());
+        saveFavoriteList = new SaveFavoriteList();
         search_btn = Objects.requireNonNull(getActivity()).findViewById(R.id.search_btn);
         StaggeredGridLayoutManager manager = new StaggeredGridLayoutManager(3, LinearLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(manager);
@@ -101,14 +104,11 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
                 android.R.color.holo_green_dark,
                 android.R.color.holo_orange_dark,
                 android.R.color.holo_blue_dark);
-        mSwipeRefreshLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                mSwipeRefreshLayout.setRefreshing(true);
-                if (MainActivity.permissionGranted) {
-                    FetchVideoList();
-                    adapter.notifyDataSetChanged();
-                }
+        mSwipeRefreshLayout.post(() -> {
+            mSwipeRefreshLayout.setRefreshing(true);
+            if (MainActivity.permissionGranted) {
+                FetchVideoList();
+                adapter.notifyDataSetChanged();
             }
         });
         return view;
@@ -177,6 +177,8 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
         LinearLayout shareLayout = main_dialog.findViewById(R.id.share);
         LinearLayout detailsLayout = main_dialog.findViewById(R.id.details);
         LinearLayout favorite = main_dialog.findViewById(R.id.favorite);
+        LinearLayout delete = main_dialog.findViewById(R.id.delete);
+        delete.setOnClickListener(this);
         renameLayout.setOnClickListener(this);
         shareLayout.setOnClickListener(this);
         detailsLayout.setOnClickListener(this);
@@ -203,9 +205,13 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
                 main_dialog.dismiss();
                 break;
             case R.id.favorite:
-                MainActivity.favoriteArrayList.add(path);
-                saveFavoriteList.SaveArrayList();
+                saveFavoriteList.SaveArrayList(getContext(),path,true);
                 Toast.makeText(getContext(), "Added to favorite!", Toast.LENGTH_SHORT).show();
+                main_dialog.dismiss();
+                break;
+
+            case R.id.delete:
+                DeleteFile(path);
                 main_dialog.dismiss();
                 break;
         }
@@ -258,41 +264,33 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
         editText.setText(nameText);
         editText.requestFocus();
         dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-        cancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        rename_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String onlyPath = file.getParentFile().getAbsolutePath();
-                String ext = file.getAbsolutePath();
-                ext = ext.substring(ext.lastIndexOf("."));
-                String newPath = onlyPath+"/"+editText.getText().toString()+ext;
-                File newFile = new File(newPath);
-                boolean rename = file.renameTo(newFile);
-                if(rename)
-                {
-                    ContentResolver resolver = Objects.requireNonNull(getActivity()).getApplicationContext().getContentResolver();
-                    resolver.delete(
-                            MediaStore.Files.getContentUri("external")
-                            , MediaStore.MediaColumns.DATA + "=?", new String[] { file.getAbsolutePath() });
-                    Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                    intent.setData(Uri.fromFile(newFile));
-                    getActivity().getApplicationContext().sendBroadcast(intent);
+        cancel.setOnClickListener(v -> dialog.dismiss());
+        rename_btn.setOnClickListener(v -> {
+            String onlyPath = file.getParentFile().getAbsolutePath();
+            String ext = file.getAbsolutePath();
+            ext = ext.substring(ext.lastIndexOf("."));
+            String newPath = onlyPath+"/"+editText.getText().toString()+ext;
+            File newFile = new File(newPath);
+            boolean rename = file.renameTo(newFile);
+            if(rename)
+            {
+                ContentResolver resolver = Objects.requireNonNull(getActivity()).getApplicationContext().getContentResolver();
+                resolver.delete(
+                        MediaStore.Files.getContentUri("external")
+                        , MediaStore.MediaColumns.DATA + "=?", new String[] { file.getAbsolutePath() });
+                Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                intent.setData(Uri.fromFile(newFile));
+                getActivity().getApplicationContext().sendBroadcast(intent);
 
-                    Toast.makeText(getContext(), "SuccessFull!", Toast.LENGTH_SHORT).show();
-                }else
-                {
-                    Toast.makeText(getContext(), "Oops! rename failed", Toast.LENGTH_SHORT).show();
-                }
-                FetchVideoList();
-                adapter.notifyDataSetChanged();
-                adapter.notifyItemChanged(adapterPosition);
-                dialog.dismiss();
+                Toast.makeText(getContext(), "SuccessFull!", Toast.LENGTH_SHORT).show();
+            }else
+            {
+                Toast.makeText(getContext(), "Oops! rename failed", Toast.LENGTH_SHORT).show();
             }
+            FetchVideoList();
+            adapter.notifyDataSetChanged();
+            adapter.notifyItemChanged(adapterPosition);
+            dialog.dismiss();
         });
         adapter.notifyDataSetChanged();
         dialog.show();
@@ -337,5 +335,19 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
         Collections.reverse(Constant.allMediaList);
         mSwipeRefreshLayout.setRefreshing(false);
         return Constant.allMediaList;
+    }
+
+    private void DeleteFile(String path)
+    {
+        new AlertDialog
+                .Builder(Objects.requireNonNull(getContext()),R.style.AlertDialogStyle).setTitle("Delete Video")
+                .setMessage("Are you sure you want to delete this video?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    Storage storage = new Storage(getContext());
+                    storage.deleteFile(path);
+                })
+                .setNegativeButton("Cancel",null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 }

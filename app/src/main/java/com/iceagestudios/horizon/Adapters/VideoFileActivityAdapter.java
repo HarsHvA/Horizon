@@ -51,21 +51,13 @@ public VideoFileActivityAdapter(Context context, ArrayList<File> arrayList, Vide
                 .centerCrop()
                 .into(holder.imageView);
 
-        holder.button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                activity.ShowMenuDialog(arrayList.get(holder.getAdapterPosition()).getAbsolutePath(),position);
-            }
-        });
+        holder.button.setOnClickListener(view -> activity.ShowMenuDialog(arrayList.get(holder.getAdapterPosition()).getAbsolutePath(),position));
 
-        holder.cardView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(context, VideoPlayer.class);
-                intent.putExtra("VideoPath",arrayList.get(holder.getAdapterPosition()).getAbsolutePath());
-                intent.putExtra("VideoName",arrayList.get(holder.getAdapterPosition()).getName());
-                context.startActivity(intent);
-            }
+        holder.cardView.setOnClickListener(view -> {
+            Intent intent = new Intent(context, VideoPlayer.class);
+            intent.putExtra("VideoPath",arrayList.get(holder.getAdapterPosition()).getAbsolutePath());
+            intent.putExtra("VideoName",arrayList.get(holder.getAdapterPosition()).getName());
+            context.startActivity(intent);
         });
 
     }

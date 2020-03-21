@@ -18,55 +18,49 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
-import com.iceagestudios.horizon.MainActivity;
+import com.google.android.material.snackbar.Snackbar;
+import com.iceagestudios.horizon.FoldersFrag;
+import com.iceagestudios.horizon.History;
 import com.iceagestudios.horizon.R;
-import com.iceagestudios.horizon.SaveFavoriteList;
 import com.iceagestudios.horizon.VideoPlayer;
 
 import java.io.File;
 import java.util.ArrayList;
 
-public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Holder> {
-    private Context context;
-    private ArrayList<File> arrayList;
-    private SaveFavoriteList saveFavoriteList;
-
-    public FavoriteAdapter(Context context, ArrayList<File> arrayList) {
+public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHolder> {
+private Context context;
+private ArrayList<File> arrayList;
+private FoldersFrag foldersFrag;
+private History history;
+    public HistoryAdapter(Context context, ArrayList<File> arrayList,FoldersFrag foldersFrag){
         this.context = context;
         this.arrayList = arrayList;
+        this.foldersFrag = foldersFrag;
     }
-
     @NonNull
     @Override
-    public Holder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.favorite_item, parent, false);
-        return new Holder(view);
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.history_item,parent,false);
+        return new ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull final Holder holder, int position) {
-
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         String name = arrayList.get(position).getName();
         name = name.substring(0,name.lastIndexOf("."));
         holder.videoTextView.setText(name);
-        RequestOptions options = new RequestOptions().override(500,700);
+        RequestOptions options = new RequestOptions().override(500,300);
         options.centerCrop();
         RequestOptions requestOptions = RequestOptions
                 .diskCacheStrategyOf(DiskCacheStrategy.ALL);
         Glide.with(context)
                 .load(arrayList.get(position).getPath())
                 .placeholder(R.drawable.ic_launcher_background)
-                .apply(options)
                 .dontAnimate()
+                .apply(options)
                 .apply(requestOptions)
                 .into(holder.img_Thumbnail);
-        saveFavoriteList = new SaveFavoriteList();
-        holder.imageButton.setOnClickListener(v -> {
-            saveFavoriteList.SaveArrayList(context,arrayList.get(position).getAbsolutePath(),false);
-            Toast.makeText(context, "Removed from favorite!", Toast.LENGTH_SHORT).show();
-            notifyDataSetChanged();
-        });
-        String finalName = name;
+        String finalName1 = name;
         holder.videoCardView.setOnClickListener(v -> {
             Intent intent = new Intent(context, VideoPlayer.class);
             intent.putExtra("VideoPath",arrayList.get(holder.getAdapterPosition()).getAbsolutePath());
@@ -75,8 +69,18 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Holder
             context.startActivity(intent);
         });
         holder.videoCardView.setOnLongClickListener(view -> {
-            Toast.makeText(context, finalName, Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, finalName1, Toast.LENGTH_SHORT).show();
             return true;
+        });
+
+        history = new History();
+        holder.imageButton.setOnClickListener(view -> {
+            history.SaveHistory(context,arrayList.get(position).getAbsolutePath(),false);
+            foldersFrag.HistoryList();
+            foldersFrag.SetSizeText(arrayList.size());
+            notifyDataSetChanged();
+            Snackbar.make(holder.videoCardView, "Video removed from history", Snackbar.LENGTH_LONG)
+                    .show();
         });
     }
 
@@ -85,14 +89,12 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Holder
         return arrayList.size();
     }
 
-    class Holder extends RecyclerView.ViewHolder {
-
+    class ViewHolder extends RecyclerView.ViewHolder{
         TextView videoTextView;
         CardView videoCardView;
         ImageView img_Thumbnail;
         ImageButton imageButton;
-
-        private Holder(@NonNull View itemView) {
+        public ViewHolder(@NonNull View itemView) {
             super(itemView);
 
             videoTextView = itemView.findViewById(R.id.videos_text_name);
