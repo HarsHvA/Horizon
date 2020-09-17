@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
+    android:fitsSystemWindows="true"
     android:layout_marginBottom="-2dp"
     android:id="@+id/background_main_activity"
     android:background="@drawable/gradientlist"
@@ -23,7 +24,6 @@
             android:layout_marginStart="25dp"
             android:layout_alignParentStart="true"
             app:tabTextAppearance="@style/CustomViewAllTab"
-            app:tabIndicatorColor="#B4B3B3"
             app:tabIndicator="@drawable/tab_selected_background"
             app:tabIndicatorGravity="stretch"
             app:tabMode="scrollable"
@@ -45,6 +45,7 @@
                     android:padding="5dp"
                     android:layout_marginTop="4dp"
                     android:layout_marginStart="3dp"
+                    android:tint="#fff"
                     android:background="@drawable/ic_search_black_48dp"/>
 
                 <ImageButton
@@ -54,7 +55,7 @@
                     android:id="@+id/info_btn"
                     android:onClick="InfoFunction"
                     android:padding="5dp"
-                    android:tint="#727272"
+                    android:tint="#fff"
                     android:src="@drawable/ic_more_vert_black_24dp"/>
             </LinearLayout>
 

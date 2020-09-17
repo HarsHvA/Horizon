@@ -4,9 +4,13 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,16 +29,25 @@ public class History {
         {
             pathList.add(url);
             sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-            LinkedHashSet<String> set = new LinkedHashSet<>(pathList);
-            sharedPreferences.edit().putStringSet("History",set).apply();
+            Gson gson = new Gson();
+            String json = gson.toJson(pathList);
+           // LinkedHashSet<String> set = new LinkedHashSet<>(pathList);
+            sharedPreferences.edit().putString("History1",json).apply();
 
         }
         else
         {
             pathList.remove(url);
-            sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+           /* sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
             LinkedHashSet<String> set = new LinkedHashSet<>(pathList);
             sharedPreferences.edit().putStringSet("History",set).apply();
+
+            */
+            sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+            Gson gson = new Gson();
+            String json = gson.toJson(pathList);
+            // LinkedHashSet<String> set = new LinkedHashSet<>(pathList);
+            sharedPreferences.edit().putString("History1",json).apply();
         }
 
     }
@@ -42,11 +55,16 @@ public class History {
     public ArrayList<String> FetchHistory(Context context)
     {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-        Set<String> newSet =  sharedPreferences.getStringSet("History",null);
-        if(newSet!=null)
+        String json =  sharedPreferences.getString("History1",null);
+        Gson gson = new Gson();
+        if(json!=null)
         {
             pathList.clear();
-            pathList.addAll(newSet);
+            Type type = new TypeToken<ArrayList<String>>(){}.getType();
+            pathList = gson.fromJson(json,type);
+            LinkedHashSet<String> set = new LinkedHashSet<>(pathList);
+            pathList.clear();
+            pathList.addAll(set);
             Collections.reverse(pathList);
         }
         return pathList;

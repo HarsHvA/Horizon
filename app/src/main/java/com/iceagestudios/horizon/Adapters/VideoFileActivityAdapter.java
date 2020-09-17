@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -51,15 +52,9 @@ public VideoFileActivityAdapter(Context context, ArrayList<File> arrayList, Vide
                 .centerCrop()
                 .into(holder.imageView);
 
-        holder.button.setOnClickListener(view -> activity.ShowMenuDialog(arrayList.get(holder.getAdapterPosition()).getAbsolutePath(),position));
-
-        holder.cardView.setOnClickListener(view -> {
-            Intent intent = new Intent(context, VideoPlayer.class);
-            intent.putExtra("VideoPath",arrayList.get(holder.getAdapterPosition()).getAbsolutePath());
-            intent.putExtra("VideoName",arrayList.get(holder.getAdapterPosition()).getName());
-            context.startActivity(intent);
-        });
-
+        holder.button.setOnClickListener
+                (view -> activity.ShowMenuDialog(arrayList.get(holder.getAdapterPosition())
+                        .getAbsolutePath(),holder.getAdapterPosition()));
     }
 
     @Override
@@ -67,7 +62,7 @@ public VideoFileActivityAdapter(Context context, ArrayList<File> arrayList, Vide
         return arrayList.size();
     }
 
-    class Holder extends RecyclerView.ViewHolder
+    class Holder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener
     {
         MaterialCardView cardView;
         ImageButton button;
@@ -80,6 +75,27 @@ public VideoFileActivityAdapter(Context context, ArrayList<File> arrayList, Vide
             imageView = itemView.findViewById(R.id.mImg);
             textView = itemView.findViewById(R.id.mText);
             button = itemView.findViewById(R.id.options_btn);
+
+            itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
+
+            button.setOnClickListener
+                    (view -> activity.ShowMenuDialog
+                            (arrayList.get(getAdapterPosition()).getAbsolutePath(),getAdapterPosition()));
+        }
+
+        @Override
+        public void onClick(View view) {
+            Intent intent = new Intent(context, VideoPlayer.class);
+            intent.putExtra("VideoPath",arrayList.get(getAdapterPosition()).getAbsolutePath());
+            intent.putExtra("VideoName",arrayList.get(getAdapterPosition()).getName());
+            context.startActivity(intent);
+        }
+
+        @Override
+        public boolean onLongClick(View view) {
+            Toast.makeText(context, arrayList.get(getAdapterPosition()).getName(), Toast.LENGTH_SHORT).show();
+            return true;
         }
     }
 

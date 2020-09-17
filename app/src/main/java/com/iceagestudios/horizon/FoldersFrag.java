@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -21,6 +22,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.iceagestudios.horizon.Adapters.FolderRecyclerAdapter;
@@ -38,15 +40,16 @@ import java.util.Set;
  * A simple {@link Fragment} subclass.
  */
 public class FoldersFrag extends Fragment implements SwipeRefreshLayout.OnRefreshListener{
-    RecyclerView folderRecyclerView;
-    RecyclerView historyRecyclerView;
-    FolderRecyclerAdapter mAdapter;
-    HistoryAdapter adapter;
-    SwipeRefreshLayout mSwipeRefreshLayout;
-    History history = new History();
-    ArrayList<File> historyList = new ArrayList<>();
-    TextView historyListSizeText;
-    TextView foldersListSizeText;
+    private RecyclerView folderRecyclerView;
+    private RecyclerView historyRecyclerView;
+    private FolderRecyclerAdapter mAdapter;
+    private HistoryAdapter adapter;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
+    private History history = new History();
+    private ArrayList<File> historyList = new ArrayList<>();
+    private TextView historyListSizeText;
+    private TextView foldersListSizeText;
+    private LinearLayout linearLayout;
 
     public FoldersFrag() {
         // Required empty public constructor
@@ -59,6 +62,7 @@ public class FoldersFrag extends Fragment implements SwipeRefreshLayout.OnRefres
         View rootView = inflater.inflate(R.layout.fragment_folders, container, false);
         historyListSizeText = rootView.findViewById(R.id.historyListSizeText);
         foldersListSizeText = rootView.findViewById(R.id.foldersListSizeText);
+        linearLayout = rootView.findViewById(R.id.historyLinearLayout);
         HistoryView(true,rootView);
         folderRecyclerView = rootView.findViewById(R.id.foldersRecyclerView);
         StaggeredGridLayoutManager manager = new StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL);
@@ -75,24 +79,25 @@ public class FoldersFrag extends Fragment implements SwipeRefreshLayout.OnRefres
                 android.R.color.holo_orange_dark,
                 android.R.color.holo_blue_dark);
         mSwipeRefreshLayout.post(() -> {
-            mSwipeRefreshLayout.setRefreshing(true);
-            if (MainActivity.permissionGranted) {
-
+                mSwipeRefreshLayout.setRefreshing(true);
                 HistoryList();
                 adapter.notifyDataSetChanged();
                 GetFolders();
                 SetFoldersListSizeText(GetFolders().size());
                 mAdapter.notifyDataSetChanged();
-            }
+                mSwipeRefreshLayout.setRefreshing(false);
         });
+        HideHistoryLayout();
         return rootView;
     }
 
-    @SuppressLint("NewApi")
+
     private ArrayList<File> GetFolders()
     {
        ArrayList<File> arrayList;
-        Constant.allMediaFoldersList.sort((file, t1) -> Long.compare(file.lastModified(), t1.lastModified()));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            Constant.allMediaFoldersList.sort((file, t1) -> Long.compare(file.lastModified(), t1.lastModified()));
+        }
         Collections.reverse(Constant.allMediaFoldersList);
         mSwipeRefreshLayout.setRefreshing(false);
         arrayList = Constant.allMediaFoldersList;
@@ -111,6 +116,7 @@ public class FoldersFrag extends Fragment implements SwipeRefreshLayout.OnRefres
         GetFolders();
         mAdapter.notifyDataSetChanged();
         SetFoldersListSizeText(GetFolders().size());
+        HideHistoryLayout();
     }
 
     @Override
@@ -121,6 +127,11 @@ public class FoldersFrag extends Fragment implements SwipeRefreshLayout.OnRefres
         folderRecyclerView.setAdapter(mAdapter);
         SetSizeText(HistoryList().size());
         SetFoldersListSizeText(GetFolders().size());
+
+        if(mSwipeRefreshLayout!=null)
+        {
+            mSwipeRefreshLayout.setRefreshing(false);
+        }
     }
 
     public ArrayList<File> HistoryList()
@@ -131,7 +142,7 @@ public class FoldersFrag extends Fragment implements SwipeRefreshLayout.OnRefres
                     historyList.add(new File(history.FetchHistory(getContext()).get(i)));
                 }
             }
-            return historyList;
+        return historyList;
     }
 
     private void HistoryView(boolean proActivated,View rootView)
@@ -159,6 +170,8 @@ public class FoldersFrag extends Fragment implements SwipeRefreshLayout.OnRefres
         SetFoldersListSizeText(GetFolders().size());
         adapter.notifyDataSetChanged();
         mAdapter.notifyDataSetChanged();
+        HideHistoryLayout();
+        mSwipeRefreshLayout.setRefreshing(false);
     }
     public void SetSizeText(int size)
     {
@@ -170,5 +183,16 @@ public class FoldersFrag extends Fragment implements SwipeRefreshLayout.OnRefres
     {
         String size2 = " ("+size+")";
         foldersListSizeText.setText(size2);
+    }
+
+    public void HideHistoryLayout()
+    {
+        if(HistoryList().size()>0)
+        {
+            linearLayout.setVisibility(View.VISIBLE);
+        }else
+        {
+            linearLayout.setVisibility(View.GONE);
+        }
     }
 }

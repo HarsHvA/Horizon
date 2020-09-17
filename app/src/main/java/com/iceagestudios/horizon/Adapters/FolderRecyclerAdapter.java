@@ -38,9 +38,9 @@ public class FolderRecyclerAdapter extends RecyclerView.Adapter<FolderRecyclerAd
 
     @Override
     public void onBindViewHolder(@NonNull final FolderHolder holder, final int position) {
-        holder.mText.setText(foldersArrayList.get(position).getName());
+        holder.mText.setText(foldersArrayList.get(holder.getAdapterPosition()).getName());
         int noOfVideos =0;
-        File[] listFile = foldersArrayList.get(position).listFiles();
+        File[] listFile = foldersArrayList.get(holder.getAdapterPosition()).listFiles();
         if(listFile!=null)
         for(int i =0;i<listFile.length;i++)
         {
@@ -51,14 +51,6 @@ public class FolderRecyclerAdapter extends RecyclerView.Adapter<FolderRecyclerAd
             }
         }
         holder.mTextNumb.setText(noOfVideos+" Videos");
-        holder.mCardView.setOnClickListener(v -> {
-            Intent intent = new Intent(mContext, VideoFilesActivity.class);
-            intent.putExtra("uri",foldersArrayList.get(position).getAbsolutePath());
-            intent.putExtra("FolderName",foldersArrayList.get(position).getName());
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(intent);
-        });
-
     }
 
     @Override
@@ -66,7 +58,7 @@ public class FolderRecyclerAdapter extends RecyclerView.Adapter<FolderRecyclerAd
         return foldersArrayList.size();
     }
 
-    class FolderHolder extends RecyclerView.ViewHolder{
+    class FolderHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         TextView mText;
         TextView mTextNumb;
         ImageView mImage;
@@ -77,6 +69,17 @@ public class FolderRecyclerAdapter extends RecyclerView.Adapter<FolderRecyclerAd
             mTextNumb = itemView.findViewById(R.id.numbText);
             mImage = itemView.findViewById(R.id.folderImageView);
             mCardView = itemView.findViewById(R.id.folderLayout);
+
+            itemView.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View view) {
+            Intent intent = new Intent(mContext, VideoFilesActivity.class);
+            intent.putExtra("uri",foldersArrayList.get(getAdapterPosition()).getAbsolutePath());
+            intent.putExtra("FolderName",foldersArrayList.get(getAdapterPosition()).getName());
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(intent);
         }
     }
 }

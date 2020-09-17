@@ -64,7 +64,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefreshListener,View.OnClickListener {
+public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefreshListener,View.OnClickListener{
     private VideosRecyclerAdapter adapter;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private SaveFavoriteList saveFavoriteList;
@@ -74,6 +74,7 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
     private Dialog main_dialog;
     private ImageButton search_btn;
     private boolean search_bar;
+    private RecyclerView recyclerView;
 
     public VideosFrag() {
         // Required empty public constructor
@@ -86,7 +87,7 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
         View view = inflater.inflate(R.layout.fragment_videos,container,false);
-        RecyclerView recyclerView = view.findViewById(R.id.videoRecyclerView);
+        recyclerView = view.findViewById(R.id.videoRecyclerView);
         mEdit = view.findViewById(R.id.editText);
         mSwipeRefreshLayout = view.findViewById(R.id.swipe_refresh);
         adapter = new VideosRecyclerAdapter(getContext(),this,mEdit,FetchVideoList());
@@ -328,10 +329,12 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
     }
 
 
-    @SuppressLint("NewApi")
+
     private ArrayList<File> FetchVideoList()
     {
-        Constant.allMediaList.sort((file, t1) -> Long.compare(file.lastModified(), t1.lastModified()));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            Constant.allMediaList.sort((file, t1) -> Long.compare(file.lastModified(), t1.lastModified()));
+        }
         Collections.reverse(Constant.allMediaList);
         mSwipeRefreshLayout.setRefreshing(false);
         return Constant.allMediaList;
@@ -345,9 +348,18 @@ public class VideosFrag extends Fragment implements SwipeRefreshLayout.OnRefresh
                 .setPositiveButton("Delete", (dialog, which) -> {
                     Storage storage = new Storage(getContext());
                     storage.deleteFile(path);
+                    FetchVideoList();
+                    adapter.notifyDataSetChanged();
                 })
                 .setNegativeButton("Cancel",null)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        FetchVideoList();
+        adapter.notifyDataSetChanged();
     }
 }

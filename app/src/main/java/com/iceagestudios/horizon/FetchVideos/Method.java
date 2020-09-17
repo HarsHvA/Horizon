@@ -9,7 +9,8 @@ public class Method {
             for (int i=0; i<fileList.length; i++){
                 if(fileList[i].isDirectory()){
                     if(fileList[i].getName().contains("cache") || fileList[i].getName().contains("Android")
-                    || fileList[i].getName().contains("stories")|| fileList[i].getName().contains(".Statuses"))
+                    || fileList[i].getName().contains("stories")|| fileList[i].getName().contains(".Statuses")
+                    || fileList[i].getName().toLowerCase().contains("gifs"))
                     {
 
                     }else

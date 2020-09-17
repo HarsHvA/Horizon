@@ -48,11 +48,11 @@ import java.util.Objects;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = "MainActivity" ;
     private TabLayout tabLayout;
-    private File storage;
-    private String[] storagePaths;
     private ImageButton btn;
     public static boolean permissionGranted;
     private FirebaseAnalytics firebaseAnalytics;
+    private File storage;
+    private String[] storagePaths;
 
     @Override
     public void onClick(View view) {
@@ -133,10 +133,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if(permissionGranted)
-        {
-            FetchVideoFiles();
-        }
         LinearLayout linearLayout = findViewById(R.id.background_main_activity);
         AnimationDrawable animationDrawable = (AnimationDrawable) linearLayout.getBackground();
         animationDrawable.setEnterFadeDuration(2000);
@@ -227,16 +223,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             dialog.dismiss();
         });
 
-    }
-    private void FetchVideoFiles()
-    {
-        storagePaths = StorageUtil.getStorageDirectories(this);
-        Constant.allMediaList.clear();
-        Constant.allMediaFoldersList.clear();
-        for (String path : storagePaths) {
-            storage = new File(path);
-            Method.load_Directory_Files(storage);
-        }
     }
 
     private void ShowPolicyDialog(){
@@ -341,5 +327,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         "\n" +
                         "If you have any questions or suggestions about my Privacy Policy, do not hesitate to contact me at iceagestud@gmail.com.\n" +
                         "\n" ;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        FetchFiles();
+    }
+
+    private void FetchFiles()
+    {
+        storagePaths = StorageUtil.getStorageDirectories(this);
+        Constant.allMediaList.clear();
+        Constant.allMediaFoldersList.clear();
+        for (String path : storagePaths) {
+            storage = new File(path);
+            Method.load_Directory_Files(storage);
+        }
     }
 }

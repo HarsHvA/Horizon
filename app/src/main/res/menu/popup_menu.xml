@@ -15,5 +15,9 @@
     <item android:title="Resize"
         android:id="@+id/resize"
         android:icon="@drawable/ic_aspect_ratio_black_24dp"/>
+    <item android:id="@+id/share_btn"
+        android:title="Share"
+        android:icon="@drawable/ic_share_black_24dp"
+        android:iconTint="#000"/>
 
 </menu>

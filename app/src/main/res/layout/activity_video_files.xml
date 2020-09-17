@@ -23,13 +23,13 @@
                 android:layout_width="35dp"
                 android:layout_height="35dp"
                 android:layout_gravity="center_vertical"
-                android:backgroundTint="#727272"
+                android:backgroundTint="@color/white_color"
                 android:background="@drawable/ic_keyboard_arrow_left_black_24dp"
                 android:id="@+id/close_activity"/>
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:textColor="#727272"
+                android:textColor="@color/white_color"
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:textStyle="bold"
@@ -47,7 +47,7 @@
                 android:layout_gravity="center_vertical"
                 android:layout_marginRight="10dp"
                 android:background="@drawable/ic_search_black_24dp"
-                android:backgroundTint="#727272"
+                android:backgroundTint="@color/white_color"
                 android:id="@+id/search_btn_video_activity"/>
         </LinearLayout>
     </androidx.appcompat.widget.Toolbar>
@@ -67,7 +67,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:visibility="gone"
-                android:textColor="#727272"
+                android:textColor="@color/white_color"
                 android:id="@+id/searchEditText"
                 android:imeOptions="actionDone"
                 android:singleLine="true" />

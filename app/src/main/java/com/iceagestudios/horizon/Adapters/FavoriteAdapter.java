@@ -46,7 +46,7 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Holder
     @Override
     public void onBindViewHolder(@NonNull final Holder holder, int position) {
 
-        String name = arrayList.get(position).getName();
+        String name = arrayList.get(holder.getAdapterPosition()).getName();
         name = name.substring(0,name.lastIndexOf("."));
         holder.videoTextView.setText(name);
         RequestOptions options = new RequestOptions().override(500,700);
@@ -54,30 +54,12 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Holder
         RequestOptions requestOptions = RequestOptions
                 .diskCacheStrategyOf(DiskCacheStrategy.ALL);
         Glide.with(context)
-                .load(arrayList.get(position).getPath())
+                .load(arrayList.get(holder.getAdapterPosition()).getPath())
                 .placeholder(R.drawable.ic_launcher_background)
                 .apply(options)
                 .dontAnimate()
                 .apply(requestOptions)
                 .into(holder.img_Thumbnail);
-        saveFavoriteList = new SaveFavoriteList();
-        holder.imageButton.setOnClickListener(v -> {
-            saveFavoriteList.SaveArrayList(context,arrayList.get(position).getAbsolutePath(),false);
-            Toast.makeText(context, "Removed from favorite!", Toast.LENGTH_SHORT).show();
-            notifyDataSetChanged();
-        });
-        String finalName = name;
-        holder.videoCardView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, VideoPlayer.class);
-            intent.putExtra("VideoPath",arrayList.get(holder.getAdapterPosition()).getAbsolutePath());
-            intent.putExtra("VideoName",arrayList.get(holder.getAdapterPosition()).getName());
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent);
-        });
-        holder.videoCardView.setOnLongClickListener(view -> {
-            Toast.makeText(context, finalName, Toast.LENGTH_SHORT).show();
-            return true;
-        });
     }
 
     @Override
@@ -85,7 +67,7 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Holder
         return arrayList.size();
     }
 
-    class Holder extends RecyclerView.ViewHolder {
+    class Holder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
 
         TextView videoTextView;
         CardView videoCardView;
@@ -99,6 +81,31 @@ public class FavoriteAdapter extends RecyclerView.Adapter<FavoriteAdapter.Holder
             img_Thumbnail = itemView.findViewById(R.id.image_thumbnail);
             videoCardView = itemView.findViewById(R.id.videos_card_view);
             imageButton = itemView.findViewById(R.id.more_btn);
+
+            itemView.setOnLongClickListener(this);
+            itemView.setOnClickListener(this);
+
+            saveFavoriteList = new SaveFavoriteList();
+            imageButton.setOnClickListener(view -> {
+                saveFavoriteList.SaveArrayList(context,arrayList.get(getAdapterPosition()).getAbsolutePath(),false);
+                Toast.makeText(context, "Removed from favorite!", Toast.LENGTH_SHORT).show();
+                notifyDataSetChanged();
+            });
+        }
+
+        @Override
+        public void onClick(View view) {
+            Intent intent = new Intent(context, VideoPlayer.class);
+            intent.putExtra("VideoPath",arrayList.get(getAdapterPosition()).getAbsolutePath());
+            intent.putExtra("VideoName",arrayList.get(getAdapterPosition()).getName());
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        }
+
+        @Override
+        public boolean onLongClick(View view) {
+            Toast.makeText(context, arrayList.get(getAdapterPosition()).getName(), Toast.LENGTH_SHORT).show();
+            return true;
         }
     }
 }

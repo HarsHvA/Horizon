@@ -46,42 +46,22 @@ private History history;
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        String name = arrayList.get(position).getName();
-        name = name.substring(0,name.lastIndexOf("."));
+        String name = arrayList.get(holder.getAdapterPosition()).getName();
+        if(name.contains(".")) {
+            name = name.substring(0, name.lastIndexOf("."));
+        }
         holder.videoTextView.setText(name);
         RequestOptions options = new RequestOptions().override(500,300);
         options.centerCrop();
         RequestOptions requestOptions = RequestOptions
                 .diskCacheStrategyOf(DiskCacheStrategy.ALL);
         Glide.with(context)
-                .load(arrayList.get(position).getPath())
+                .load(arrayList.get(holder.getAdapterPosition()).getPath())
                 .placeholder(R.drawable.ic_launcher_background)
                 .dontAnimate()
                 .apply(options)
                 .apply(requestOptions)
                 .into(holder.img_Thumbnail);
-        String finalName1 = name;
-        holder.videoCardView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, VideoPlayer.class);
-            intent.putExtra("VideoPath",arrayList.get(holder.getAdapterPosition()).getAbsolutePath());
-            intent.putExtra("VideoName",arrayList.get(holder.getAdapterPosition()).getName());
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent);
-        });
-        holder.videoCardView.setOnLongClickListener(view -> {
-            Toast.makeText(context, finalName1, Toast.LENGTH_SHORT).show();
-            return true;
-        });
-
-        history = new History();
-        holder.imageButton.setOnClickListener(view -> {
-            history.SaveHistory(context,arrayList.get(position).getAbsolutePath(),false);
-            foldersFrag.HistoryList();
-            foldersFrag.SetSizeText(arrayList.size());
-            notifyDataSetChanged();
-            Snackbar.make(holder.videoCardView, "Video removed from history", Snackbar.LENGTH_LONG)
-                    .show();
-        });
     }
 
     @Override
@@ -89,7 +69,7 @@ private History history;
         return arrayList.size();
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder{
+    class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         TextView videoTextView;
         CardView videoCardView;
         ImageView img_Thumbnail;
@@ -101,6 +81,35 @@ private History history;
             img_Thumbnail = itemView.findViewById(R.id.image_thumbnail);
             videoCardView = itemView.findViewById(R.id.videos_card_view);
             imageButton = itemView.findViewById(R.id.more_btn);
+
+            itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
+
+            history = new History();
+            imageButton.setOnClickListener(view -> {
+                history.SaveHistory(context,arrayList.get(getAdapterPosition()).getAbsolutePath(),false);
+                foldersFrag.HistoryList();
+                foldersFrag.SetSizeText(arrayList.size());
+                notifyDataSetChanged();
+                Snackbar.make(videoCardView, "Video removed from history", Snackbar.LENGTH_LONG)
+                        .show();
+            });
+
+        }
+
+        @Override
+        public void onClick(View view) {
+            Intent intent = new Intent(context, VideoPlayer.class);
+            intent.putExtra("VideoPath",arrayList.get(getAdapterPosition()).getAbsolutePath());
+            intent.putExtra("VideoName",arrayList.get(getAdapterPosition()).getName());
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        }
+
+        @Override
+        public boolean onLongClick(View view) {
+            Toast.makeText(context, arrayList.get(getAdapterPosition()).getName(), Toast.LENGTH_SHORT).show();
+            return true;
         }
     }
 }

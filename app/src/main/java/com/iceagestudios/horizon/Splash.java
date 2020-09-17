@@ -14,6 +14,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.widget.Toast;
 
+import com.airbnb.lottie.LottieAnimationView;
+import com.iceagestudios.horizon.FetchVideos.Constant;
 import com.iceagestudios.horizon.FetchVideos.Method;
 import com.iceagestudios.horizon.FetchVideos.StorageUtil;
 
@@ -22,21 +24,36 @@ import java.io.File;
 public class Splash extends AppCompatActivity {
     public static int RequestPermission =1;
     private boolean permission = false;
+    private File storage;
+    private String[] storagePaths;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
         Permissions();
-
         if(permission)
         {
-            final Intent intent = new Intent(this,MainActivity.class);
+            FetchVideoFiles();
             new Handler().postDelayed(() -> {
-                startActivity(intent);
-                finish();
+                    final Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                    startActivity(intent);
+                    finish();
             },4000);
+
         }
+    }
+
+    public boolean FetchVideoFiles()
+    {
+        storagePaths = StorageUtil.getStorageDirectories(this);
+        Constant.allMediaList.clear();
+        Constant.allMediaFoldersList.clear();
+        for (String path : storagePaths) {
+            storage = new File(path);
+            Method.load_Directory_Files(storage);
+        }
+        return true;
     }
 
     @Override

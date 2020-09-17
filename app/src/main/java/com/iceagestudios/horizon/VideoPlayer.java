@@ -1,17 +1,16 @@
 package com.iceagestudios.horizon;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.app.PictureInPictureParams;
 import android.app.TimePickerDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.graphics.Point;
 import android.media.AudioManager;
 import android.net.Uri;
@@ -20,34 +19,27 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.util.Rational;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.TimePicker;
 import android.widget.Toast;
 
-import com.github.angads25.filepicker.controller.DialogSelectionListener;
 import com.github.angads25.filepicker.model.DialogConfigs;
 import com.github.angads25.filepicker.model.DialogProperties;
 import com.github.angads25.filepicker.view.FilePickerDialog;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
-import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.Format;
@@ -60,18 +52,12 @@ import com.google.android.exoplayer2.source.SingleSampleMediaSource;
 import com.google.android.exoplayer2.source.dash.DashMediaSource;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource;
-import com.google.android.exoplayer2.text.Subtitle;
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.MappingTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.ui.TimeBar;
-import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultAllocator;
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.android.exoplayer2.util.Util;
@@ -79,12 +65,9 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class VideoPlayer extends AppCompatActivity implements Player.EventListener,View.OnClickListener,View.OnTouchListener,
@@ -118,6 +101,7 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
     private String name;
     private FirebaseAnalytics firebaseAnalytics;
     private SharedPreferences savedUrl;
+    private boolean saveHistory = true;
    // private ArrayAdapter<String> listAdapter;
    // private ArrayList<String> subArrayList;
 // Subtitles
@@ -427,28 +411,6 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
                 playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FILL);
                 dialog_resize.dismiss();
                 break;
-
-       /*     case R.id.add_online_sub:
-                if(onlinePath == null)
-                {
-                    Toast.makeText(this, "Name is empty!", Toast.LENGTH_SHORT).show();
-                }else
-                {
-                   ShowSubListDialog();
-                }
-                onlineSubDialog.dismiss();
-                break;
-
-            case R.id.cancel_online_sub:
-                onlineSubDialog.dismiss();
-                exoPlayer.setPlayWhenReady(true);
-                pause = false;
-                btn_pause.setImageResource(R.drawable.ic_pause_circle_outline_black_24dp);
-                break;
-
-
-        */
-
         }
     }
     @Override
@@ -472,7 +434,6 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         Objects.requireNonNull(audioManager).requestAudioFocus(null,AudioManager.STREAM_MUSIC,AudioManager.AUDIOFOCUS_GAIN);
         name = intent.getStringExtra("VideoName");
         layoutParams = getWindow().getAttributes();
-  //      audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
         display = getWindowManager().getDefaultDisplay();
         size = new Point();
         display.getSize(size);
@@ -494,6 +455,7 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         exoPlayer.addListener(this);
         exoPlayer.setPlayWhenReady(true);
         exoPlayer.setRepeatMode(Player.REPEAT_MODE_ONE);
+
         long savedUri = savedUrl.getLong(String.valueOf(VideoUrl()),-1);
         if(savedUri!= -1)
         {
@@ -504,23 +466,20 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         txt_title.setText(name);
         mainHandler = new Handler();
 
-        updatePlayer = new Runnable() {
-            @Override
-            public void run() {
+        updatePlayer = () -> {
 
 
-                @SuppressLint("DefaultLocale") String curDur = String.format("%02d.%02d.%02d",
-                        TimeUnit.MILLISECONDS.toHours(exoPlayer.getCurrentPosition()),
-                        TimeUnit.MILLISECONDS.toMinutes(exoPlayer.getCurrentPosition()) -
-                                TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(exoPlayer.getCurrentPosition())), // The change is in this line
-                        TimeUnit.MILLISECONDS.toSeconds(exoPlayer.getCurrentPosition()) -
-                                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(exoPlayer.getCurrentPosition())));
-                txt_ct.setText(curDur);
-                seekDuration = curDur;
-                timeBar.setDuration(exoPlayer.getDuration());
-                timeBar.setPosition(exoPlayer.getCurrentPosition());
-                mainHandler.postDelayed(updatePlayer, 100);
-            }
+            @SuppressLint("DefaultLocale") String curDur = String.format("%02d.%02d.%02d",
+                    TimeUnit.MILLISECONDS.toHours(exoPlayer.getCurrentPosition()),
+                    TimeUnit.MILLISECONDS.toMinutes(exoPlayer.getCurrentPosition()) -
+                            TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(exoPlayer.getCurrentPosition())), // The change is in this line
+                    TimeUnit.MILLISECONDS.toSeconds(exoPlayer.getCurrentPosition()) -
+                            TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(exoPlayer.getCurrentPosition())));
+            txt_ct.setText(curDur);
+            seekDuration = curDur;
+            timeBar.setDuration(exoPlayer.getDuration());
+            timeBar.setPosition(exoPlayer.getCurrentPosition());
+            mainHandler.postDelayed(updatePlayer, 100);
         };
         mainHandler.postDelayed(updatePlayer,200);
         timeBar.addListener(new TimeBar.OnScrubListener() {
@@ -560,10 +519,12 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
     @Override
     protected void onPause() {
         super.onPause();
-        exoPlayer.setPlayWhenReady(false);
-        btn_pause.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
-        pause = true;
+//        exoPlayer.setPlayWhenReady(false);
+//        btn_pause.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
+//        pause = true;
+        PIPMode();
     }
+
 
     private void FindView()
     {
@@ -597,12 +558,7 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         }
     }
     {
-        hideControls = new Runnable() {
-            @Override
-            public void run() {
-                hideAllControls();
-            }
-        };
+        hideControls = this::hideAllControls;
     }
     private void hideAllControls(){
         playerView.hideController();
@@ -653,31 +609,31 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
             System.out.println(e.toString());
         }
 
-        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId())
-                {
-                    case R.id.play_back_speed:
-                        ShowPlaybackPopup();
-                        return true;
+        popup.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId())
+            {
+                case R.id.play_back_speed:
+                    ShowPlaybackPopup();
+                    return true;
 
-                    case R.id.resize:
-                        ShowResizePopup();
-                        return true;
+                case R.id.resize:
+                    ShowResizePopup();
+                    return true;
 
-                    case R.id.sleep_timer:
-                        stopAlarmRunnable = false;
-                        SleepTimer();
-                        return true;
+                case R.id.sleep_timer:
+                    stopAlarmRunnable = false;
+                    SleepTimer();
+                    return true;
 
-                    case R.id.jump_to_time:
-                        ShowJumpToTimePopup();
-                        return true;
+                case R.id.jump_to_time:
+                    ShowJumpToTimePopup();
+                    return true;
 
-                    default:
-                        return false;
-                }
+                case R.id.share_btn:
+                    ShareFile();
+                    return true;
+                default:
+                    return false;
             }
         });
         popup.show();
@@ -685,47 +641,33 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
 
     public void ShowSubtitlePopup(View v)
     {
-        final File directory = new File("/mnt/");
         PopupMenu popup = new PopupMenu(this, v);
         MenuInflater inflater = popup.getMenuInflater();
         inflater.inflate(R.menu.subtitle_menu, popup.getMenu());
-        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId())
-                {
-                   /* case R.id.online_sub:
+        popup.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId())
+            {
+                case R.id.offline_sub:
+                    seekProgress = exoPlayer.getCurrentPosition();
+                    exoPlayer.setPlayWhenReady(false);
+                    btn_pause.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
+                    pause = true;
+                    ShowOfflineSubtitleDialog();
+                    return true;
+
+                case R.id.remove_sub:
+                    if(caption)
+                    {
+                        long progress = exoPlayer.getCurrentPosition();
                         exoPlayer.setPlayWhenReady(false);
-                        pause = true;
-                        btn_pause.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
-                        ShowOnlineSubtitleDialog();
-                        return true;
-
-
-                    */
-
-                    case R.id.offline_sub:
-                        seekProgress = exoPlayer.getCurrentPosition();
-                        exoPlayer.setPlayWhenReady(false);
-                        btn_pause.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
-                        pause = true;
-                        ShowOfflineSubtitleDialog();
-                        return true;
-
-                    case R.id.remove_sub:
-                        if(caption)
-                        {
-                            long progress = exoPlayer.getCurrentPosition();
-                            exoPlayer.setPlayWhenReady(false);
-                            exoPlayer.prepare(CreateMediaSource());
-                            caption = false;
-                            exoPlayer.setPlayWhenReady(true);
-                            exoPlayer.seekTo(progress);
-                        }
-                        return true;
-                    default:
-                        return false;
-                }
+                        exoPlayer.prepare(CreateMediaSource());
+                        caption = false;
+                        exoPlayer.setPlayWhenReady(true);
+                        exoPlayer.seekTo(progress);
+                    }
+                    return true;
+                default:
+                    return false;
             }
         });
         popup.show();
@@ -734,25 +676,10 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
     private void SleepTimer()
     {
         exoPlayer.setPlayWhenReady(false);
-        final TimePickerDialog timePickerDialog = new TimePickerDialog(VideoPlayer.this,new TimePickerDialog.OnTimeSetListener() {
-            @Override
-            public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                SleepAlarm(hourOfDay,minute);
-            }
-        },0,0,true);
+        final TimePickerDialog timePickerDialog = new TimePickerDialog(VideoPlayer.this, (view, hourOfDay, minute) -> SleepAlarm(hourOfDay,minute),0,0,true);
         timePickerDialog.show();
-        timePickerDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-            @Override
-            public void onDismiss(DialogInterface dialog) {
-                exoPlayer.setPlayWhenReady(true);
-            }
-        });
-        timePickerDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                exoPlayer.setPlayWhenReady(true);
-            }
-        });
+        timePickerDialog.setOnDismissListener(dialog -> exoPlayer.setPlayWhenReady(true));
+        timePickerDialog.setOnCancelListener(dialog -> exoPlayer.setPlayWhenReady(true));
     }
 
     private void SleepAlarm(final int hourOfTheDay,final int minutes)
@@ -830,12 +757,7 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         final EditText seconds = jump_dialog.findViewById(R.id.timerSecondsEditText);
         ImageButton jumpTime = jump_dialog.findViewById(R.id.timerBtn);
         jump_dialog.show();
-        jumpTime.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                jump_time(hour,minute,seconds);
-            }
-        });
+        jumpTime.setOnClickListener(v -> jump_time(hour,minute,seconds));
     }
 
     private void ShowVolBrightLayout(String percentage, String name)
@@ -846,14 +768,11 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         TextView percentageText = findViewById(R.id.vol_percentage);
         nameText.setText(name);
         percentageText.setText(percentage);
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
+        Runnable r = () -> {
 
-                if(vol_brightness_layout!= null)
-                {
-                    vol_brightness_layout.setVisibility(View.GONE);
-                }
+            if(vol_brightness_layout!= null)
+            {
+                vol_brightness_layout.setVisibility(View.GONE);
             }
         };
         mainHandler.removeCallbacks(r);
@@ -901,32 +820,11 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
 
     private void ShowOfflineSubtitleDialog()
     {
-       /* popupWindow = new Dialog(this);
-        popupWindow.setContentView(R.layout.captions_layout);
-        caption_cancel = popupWindow.findViewById(R.id.caption_cancel);
-        btn_goback = popupWindow.findViewById(R.id.caption_close_btn);
-        btn_goback.setOnClickListener(this);
-        caption_cancel.setOnClickListener(this);
-        captionsRecyclerView = popupWindow.findViewById(R.id.captions_recycler_view);
-        captionsRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
-        captionsRecyclerView.setHasFixedSize(true);
-        mAdapter = new CaptionsAdapter(captionsArrayList,this);
-        captionsRecyclerView.setAdapter(mAdapter);
-        Objects.requireNonNull(popupWindow.getWindow()).setBackgroundDrawableResource(android.R.color.transparent);
-        popupWindow.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
-        popupWindow.show();
-
-        */
         FilePickerDialog dialog = new FilePickerDialog(this,GetDialogProperties());
         dialog.setTitle("Select a File");
 
         dialog.show();
-        dialog.setDialogSelectionListener(new DialogSelectionListener() {
-            @Override
-            public void onSelectedFilePaths(String[] files) {
-                FetchSubtitles(files[0]);
-            }
-        });
+        dialog.setDialogSelectionListener(files -> FetchSubtitles(files[0]));
     }
     private DialogProperties GetDialogProperties()
     {
@@ -990,7 +888,6 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
         Intent intent = getIntent();
         String action = intent.getAction();
         String type = intent.getType();
-     //   Log.d(TAG, "VideoUrl: " + type);
         if(Intent.ACTION_VIEW.equals(action) && type!=null) {
             if (type.equals("video/*")) {
                 Uri videoUri = intent.getData();
@@ -1012,21 +909,29 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
             loadControlBufferMs = 90000;
             return url;
         }
-        return null;
+        return intent.getData();
     }
 
-    private void PreparePlayer()
+    private boolean PreparePlayer()
     {
         Intent intent = getIntent();
         String action = intent.getAction();
         String type = intent.getType();
-     //   Log.d(TAG, "VideoUrl: " + type);
-        if(Intent.ACTION_VIEW.equals(action) && type!=null) {
 
-                exoPlayer = ExoPlayerFactory.newSimpleInstance(this);
+        if(action == null && type == null)
+        {
+            saveHistory = true;
+            exoPlayer = ExoPlayerFactory.newSimpleInstance(this);
+        }else if(Intent.ACTION_VIEW.equals(action) && type!=null) {
 
+            saveHistory = false;
+            if(type.equals("video/*")) {
+                exoPlayer = ExoPlayerFactory.newSimpleInstance(this,TrackSelector(),
+                        defaultLoadControl());
+            }
         }else if(action == null)
         {
+            saveHistory = false;
             if(name!=null && name.equals("Stream"))
             {
                 exoPlayer = ExoPlayerFactory.newSimpleInstance(this,TrackSelector(),
@@ -1035,13 +940,13 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
             {
                 exoPlayer = ExoPlayerFactory.newSimpleInstance(this);
             }
-        //    Log.d(TAG, "PreparePlayer: "+0);
         }else if(Intent.ACTION_VIEW.equals(action))
         {
+            saveHistory = false;
             exoPlayer = ExoPlayerFactory.newSimpleInstance(this,TrackSelector(),
                     defaultLoadControl());
-         //   Log.d(TAG, "PreparePlayer: "+1);
         }
+        return true;
     }
 
     private DefaultDataSourceFactory CreateDataSourceFactory()
@@ -1069,13 +974,81 @@ GestureDetector.OnGestureListener,GestureDetector.OnDoubleTapListener{
     @Override
     protected void onStop() {
         super.onStop();
-        History history = new History();
-        history.SaveHistory(this,String.valueOf(VideoUrl()),true);
+        if(saveHistory) {
+            History history = new History();
+            history.SaveHistory(this, String.valueOf(VideoUrl()), true);
+        }
         savedUrl.edit().putLong(String.valueOf(VideoUrl()),exoPlayer.getCurrentPosition()).apply();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        exoPlayer.setPlayWhenReady(true);
+        btn_pause.setImageResource(R.drawable.ic_pause_circle_outline_black_24dp);
+        pause = false;
     }
 
     public void FinishPlayerActivity(View view)
     {
         finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        exoPlayer.release();
+    }
+
+    public void ShareFile() {
+        if (VideoUrl() != null) {
+            String path = String.valueOf(VideoUrl());
+            Intent intentShareFile = new Intent(Intent.ACTION_SEND);
+            File fileWithinMyDir = new File(path);
+
+            if (fileWithinMyDir.exists()) {
+                intentShareFile.setType("video/*");
+                intentShareFile.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + path));
+
+                String shareMessage = "\nLet me recommend you this awesome video player\n\n";
+                shareMessage = shareMessage + "https://play.google.com/store/apps/details?id=" + BuildConfig.APPLICATION_ID + "\n\n";
+                // TODO: Change Sharing File with your app name and link
+                intentShareFile.putExtra(Intent.EXTRA_SUBJECT,
+                        "HV Player");
+                intentShareFile.putExtra(Intent.EXTRA_TEXT, shareMessage);
+
+                startActivity(Intent.createChooser(intentShareFile, "Share File"));
+            }
+        }
+    }
+
+    public void PIPMode(){
+        Display d = getWindowManager()
+                .getDefaultDisplay();
+        Point p = new Point();
+        d.getSize(p);
+        int width = p.x;
+        int height = p.y;
+
+        Rational ratio
+                = new Rational(width, height);
+       if(Build.VERSION.SDK_INT >= 26) {
+           PictureInPictureParams.Builder
+                   pip_Builder
+                   = new PictureInPictureParams
+                   .Builder();
+           pip_Builder.setAspectRatio(ratio).build();
+           enterPictureInPictureMode(pip_Builder.build());
+       }
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+        if(!isInPictureInPictureMode){
+        exoPlayer.setPlayWhenReady(false);
+        btn_pause.setImageResource(R.drawable.ic_play_circle_outline_black_24dp);
+        pause = true;
+        }
     }
 }
